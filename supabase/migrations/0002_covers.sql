@@ -11,6 +11,26 @@ alter table skills add column if not exists cover_error text;
 
 create index if not exists skills_cover_status_idx on skills (cover_status);
 
+create or replace function claim_skill_cover(p_skill_id uuid) returns boolean
+  language plpgsql security definer
+  set search_path = public
+as $$
+declare
+  claimed uuid;
+begin
+  update skills
+  set
+    cover_status = 'generating',
+    cover_attempts = cover_attempts + 1,
+    cover_error = null
+  where id = p_skill_id
+    and cover_status in ('pending', 'failed')
+  returning id into claimed;
+
+  return claimed is not null;
+end;
+$$;
+
 -- Recreate skill_stats matview to expose cover_status (needed so the UI can
 -- distinguish "AI cover ready" from "OG fallback").
 drop materialized view if exists skill_stats;

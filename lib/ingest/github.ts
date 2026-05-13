@@ -4,6 +4,8 @@
  */
 
 const API = "https://api.github.com";
+export const MAX_SKILL_FILE_BYTES = 256_000;
+export const MAX_SKILL_FILES_PER_REPO = 1_000;
 
 function authHeaders(): HeadersInit {
   const token = process.env.GITHUB_TOKEN;
@@ -58,11 +60,19 @@ export async function listSkillFiles(
   if (tree.truncated) {
     throw new Error(`GitHub tree for ${owner}/${repo}@${branch} was truncated`);
   }
-  return tree.tree
+  const matches = tree.tree
     .filter((e) => e.type === "blob")
-    .map((e) => e.path)
-    .filter((p) => /(^|\/)SKILL\.md$/i.test(p))
-    .filter((p) => !pathPrefix || p.startsWith(pathPrefix));
+    .filter((e) => /(^|\/)SKILL\.md$/i.test(e.path))
+    .filter((e) => !pathPrefix || e.path.startsWith(pathPrefix))
+    .filter((e) => typeof e.size !== "number" || e.size <= MAX_SKILL_FILE_BYTES);
+
+  if (matches.length > MAX_SKILL_FILES_PER_REPO) {
+    throw new Error(
+      `${owner}/${repo} has ${matches.length} skill files; cap is ${MAX_SKILL_FILES_PER_REPO}`,
+    );
+  }
+
+  return matches.map((e) => e.path);
 }
 
 export async function fetchRaw(
@@ -74,7 +84,15 @@ export async function fetchRaw(
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
   const res = await fetch(url, { headers: { "User-Agent": "skillZs-ingest/0.1" } });
   if (!res.ok) throw new Error(`raw ${url} -> ${res.status}`);
-  return res.text();
+  const declaredSize = Number(res.headers.get("content-length") ?? "0");
+  if (declaredSize > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`raw ${url} exceeded ${MAX_SKILL_FILE_BYTES} bytes`);
+  }
+  const text = await res.text();
+  if (Buffer.byteLength(text, "utf8") > MAX_SKILL_FILE_BYTES) {
+    throw new Error(`raw ${url} exceeded ${MAX_SKILL_FILE_BYTES} bytes`);
+  }
+  return text;
 }
 
 export function ogImageUrl(owner: string, repo: string): string {

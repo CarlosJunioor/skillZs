@@ -6,21 +6,21 @@ import { compactNumber } from "@/lib/format";
 export const revalidate = 120;
 
 const SORTS: Array<{ key: SortKey; label: string }> = [
-  { key: "hot",   label: "hot" },
-  { key: "new",   label: "fresh" },
+  { key: "hot", label: "hot" },
+  { key: "new", label: "fresh" },
   { key: "votes", label: "most voted" },
-  { key: "uses",  label: "most used" },
+  { key: "uses", label: "most used" },
   { key: "stars", label: "most starred" },
 ];
 
 const CATS: Array<{ key: string; label: string }> = [
-  { key: "all",      label: "all" },
-  { key: "coding",   label: "coding" },
+  { key: "all", label: "all" },
+  { key: "coding", label: "coding" },
   { key: "creative", label: "creative" },
-  { key: "agent",    label: "agents" },
-  { key: "utils",    label: "utils" },
+  { key: "agent", label: "agents" },
+  { key: "utils", label: "utils" },
   { key: "research", label: "research" },
-  { key: "other",    label: "misc" },
+  { key: "other", label: "misc" },
 ];
 
 const PAGE = 60;
@@ -94,7 +94,7 @@ export default async function BrowsePage({
           <span className="tag-font text-[var(--color-grape)] mr-2">filter:</span>
           <Link href={buildHref({ covered: !coveredOnly, page: 1 })} scroll={false}
             className="tag-pill" data-active={coveredOnly || undefined}>
-            {coveredOnly ? "✓ tagged covers only" : "tagged covers only"}
+            {coveredOnly ? "\u2713 tagged covers only" : "tagged covers only"}
           </Link>
         </div>
       </div>
@@ -115,13 +115,13 @@ export default async function BrowsePage({
       {totalPages > 1 && (
         <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
           {page > 1 && (
-            <Link href={buildHref({ page: page - 1 })} className="tag-pill">← prev</Link>
+            <Link href={buildHref({ page: page - 1 })} className="tag-pill">&larr; prev</Link>
           )}
           <span className="type-font text-sm text-[var(--color-rust)]">
-            page {page} / {totalPages} — showing {offset + 1}–{Math.min(offset + PAGE, total)} of {compactNumber(total)}
+            page {page} / {totalPages} - showing {offset + 1}-{Math.min(offset + PAGE, total)} of {compactNumber(total)}
           </span>
           {page < totalPages && (
-            <Link href={buildHref({ page: page + 1 })} className="tag-pill">next →</Link>
+            <Link href={buildHref({ page: page + 1 })} className="tag-pill">next &rarr;</Link>
           )}
         </div>
       )}

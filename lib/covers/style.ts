@@ -15,7 +15,7 @@ const STYLE_DNA = `
 Circular fisheye portrait, heavy black outer vignette, slightly off-center.
 Urban comic illustration with THICK black ink lineart (no thin strokes).
 Grunge overlay: visible paper grain, ink scratches, dust speckle.
-Muted desaturated palette — never saturated, never pastel.
+Muted desaturated palette - never saturated, never pastel.
 Close-up character foreground inside a warped interior background.
 Hand-drawn feel, NO glossy AI render, NO 3D, NO Pixar softness.
 Whites are bone cream #E8DFC9, never pure white. Blacks are #1A1A1A, never pure black.
@@ -31,10 +31,8 @@ Extreme wide grin, full teeth grid + gum line visible.
 Bandage / scar / dirt detail on cheek.
 Dark hoodie with small skull motif on chest, drawstrings visible.
 Optional: hoop earring, piercing, plaster.
-Original character — no celebrity / IP likenesses.
+Original character - no celebrity / IP likenesses.
 `.trim();
-
-/* ---------- per-skill variation axes ---------- */
 
 const SETTINGS_BY_CATEGORY: Record<string, string[]> = {
   coding: [
@@ -68,7 +66,7 @@ const SETTINGS_BY_CATEGORY: Record<string, string[]> = {
   ],
 };
 
-const GLYPHS = ["!", "?", "♥", "?!", "..."];
+const GLYPHS = ["!", "?", "\u2665", "?!", "..."];
 
 const PROPS = [
   "cardboard box on the floor with a marker label",
@@ -77,8 +75,6 @@ const PROPS = [
   "open spiral notebook with one word visible",
   "polaroid taped at an angle",
 ];
-
-/* ---------- prompt assembly ---------- */
 
 export interface SkillForPrompt {
   name: string;
@@ -112,8 +108,6 @@ export function buildPrompt(skill: SkillForPrompt): string {
   ].join("\n");
 }
 
-/* ---------- helpers ---------- */
-
 function derivConcept(name: string, description: string): string {
   const first =
     description
@@ -125,16 +119,14 @@ function derivConcept(name: string, description: string): string {
   return `Pose / expression conveys: ${trimmed}.`;
 }
 
-/** Skill name → short uppercase graffiti word (max 12 chars). */
+/** Skill name -> short uppercase graffiti word (max 12 chars). */
 function graffitiWord(name: string): string {
   const cleaned = name.replace(/[^a-zA-Z0-9]+/g, " ").trim();
-  // Take longest single word, fall back to whole thing.
   const parts = cleaned.split(/\s+/).sort((a, b) => b.length - a.length);
   const pick = (parts[0] ?? cleaned).toUpperCase().slice(0, 12);
   return pick || "SKILL";
 }
 
-/** Deterministic per-skill picker so the same slug renders the same setting/glyph each retry. */
 function pickFor<T>(skill: SkillForPrompt, options: T[]): T {
   const seed = (skill.slug ?? skill.name).split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   return options[seed % options.length] as T;

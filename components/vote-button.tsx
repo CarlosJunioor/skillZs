@@ -10,8 +10,8 @@ interface Props {
 }
 
 const COPY = {
-  vote: { idle: "♥ vote it",  active: "✓ voted",   endpoint: "/api/vote" },
-  use:  { idle: "@ I use this", active: "✓ noted", endpoint: "/api/use"  },
+  vote: { idle: "\u2665 vote it", active: "\u2713 voted", endpoint: "/api/vote" },
+  use: { idle: "@ I use this", active: "\u2713 noted", endpoint: "/api/use" },
 } as const;
 
 export function VoteButton({ skillId, initialCount, variant }: Props) {
@@ -58,7 +58,7 @@ export function VoteButton({ skillId, initialCount, variant }: Props) {
       className="tag-pill text-base px-5 py-2.5"
       style={{ background: bg, color: fg }}
     >
-      {done ? cfg.active : cfg.idle} · {compactNumber(count)}
+      {done ? cfg.active : cfg.idle} &middot; {compactNumber(count)}
     </button>
   );
 }

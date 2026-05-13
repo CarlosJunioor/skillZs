@@ -4,7 +4,7 @@ import { generateCover, type CoverQuality } from "./generate";
 import { uploadCover } from "./upload";
 
 export interface CoverRunOptions {
-  /** how many to generate this run. Cap to keep $$$ predictable. */
+  /** how many to generate this run. Cap to keep costs predictable. */
   limit?: number;
   /** "low" (default) | "medium" | "high" */
   quality?: CoverQuality;
@@ -34,8 +34,6 @@ export async function runCoverGeneration(opts: CoverRunOptions = {}): Promise<Co
     errors: [],
   };
 
-  // Pick top-N skills with no AI cover yet.
-  // Order by skill_stats.hotness so we cover popular ones first.
   const { data: candidates, error: pickErr } = await sb
     .from("skill_stats")
     .select("id, slug, name, description, category")
@@ -50,14 +48,18 @@ export async function runCoverGeneration(opts: CoverRunOptions = {}): Promise<Co
   if (!candidates || candidates.length === 0) return stats;
 
   for (const c of candidates) {
-    stats.attempted++;
-    // Mark as generating so concurrent runs skip it.
-    await sb
-      .from("skills")
-      .update({ cover_status: "generating", cover_attempts: undefined })
-      .eq("id", c.id);
+    const { data: claimed, error: claimErr } = await sb.rpc("claim_skill_cover", {
+      p_skill_id: c.id,
+    });
+    if (claimErr) {
+      stats.errors.push(`${c.slug}: claim failed: ${claimErr.message}`);
+      continue;
+    }
+    if (!claimed) continue;
 
+    stats.attempted++;
     let costAlreadyCharged = 0;
+
     try {
       const prompt = buildPrompt({
         name: c.name,
@@ -66,7 +68,6 @@ export async function runCoverGeneration(opts: CoverRunOptions = {}): Promise<Co
         slug: c.slug,
       });
       const { bytes, estimatedCostUsd } = await generateCover({ prompt, quality });
-      // OpenAI billed us at this point regardless of what happens after.
       costAlreadyCharged = estimatedCostUsd;
       stats.estimatedCostUsd += estimatedCostUsd;
 
@@ -81,7 +82,8 @@ export async function runCoverGeneration(opts: CoverRunOptions = {}): Promise<Co
           cover_generated_at: new Date().toISOString(),
           cover_error: null,
         })
-        .eq("id", c.id);
+        .eq("id", c.id)
+        .eq("cover_status", "generating");
       if (updErr) throw new Error(`db update: ${updErr.message}`);
 
       stats.generated++;
@@ -95,11 +97,11 @@ export async function runCoverGeneration(opts: CoverRunOptions = {}): Promise<Co
       await sb
         .from("skills")
         .update({ cover_status: "failed", cover_error: msg.slice(0, 500) })
-        .eq("id", c.id);
+        .eq("id", c.id)
+        .eq("cover_status", "generating");
     }
   }
 
-  // Refresh aggregate matview so the new cover_url + cover_status surface on home.
   await sb.rpc("refresh_skill_stats");
 
   return stats;

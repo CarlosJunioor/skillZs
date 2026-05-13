@@ -6,7 +6,7 @@ import { put } from "@vercel/blob";
  * Vercel Blob is edge-cached automatically; the returned URL works as <img src>
  * with no extra config. Path is `covers/{slug}.png`.
  *
- * Set BLOB_READ_WRITE_TOKEN in .env.local (Vercel project → Storage → Blob).
+ * Set BLOB_READ_WRITE_TOKEN in .env.local (Vercel project > Storage > Blob).
  */
 export async function uploadCover(slug: string, bytes: Buffer): Promise<string> {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
@@ -16,7 +16,6 @@ export async function uploadCover(slug: string, bytes: Buffer): Promise<string> 
     access: "public",
     contentType: "image/png",
     cacheControlMaxAge: 31_536_000,
-    addRandomSuffix: false,
     token,
   });
   return url;

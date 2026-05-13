@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 const TABS = [
-  { key: "hot",   label: "hot" },
-  { key: "new",   label: "fresh" },
+  { key: "hot", label: "hot" },
+  { key: "new", label: "fresh" },
   { key: "votes", label: "most voted" },
-  { key: "uses",  label: "most used" },
+  { key: "uses", label: "most used" },
   { key: "stars", label: "most starred" },
 ] as const;
 
@@ -30,7 +30,7 @@ export function SortTabs() {
     <div className="mt-12 mb-2 px-1">
       <div className="flex items-end justify-between mb-3 flex-wrap gap-2">
         <h3 className="tag-font text-2xl text-[var(--color-grape)] rotate-[-1.5deg]">
-          ✦ pick your poison
+          {"\u2726"} pick your poison
         </h3>
         <Link
           href={buildHref({ covered: !coveredOnly })}
@@ -39,7 +39,7 @@ export function SortTabs() {
           data-active={coveredOnly || undefined}
           style={coveredOnly ? { background: "var(--color-olive)", color: "var(--color-ink)" } : undefined}
         >
-          {coveredOnly ? "✓ tagged only" : "filter: tagged covers"}
+          {coveredOnly ? "\u2713 tagged only" : "filter: tagged covers"}
         </Link>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -51,7 +51,13 @@ export default async function HomePage({
       fetchByCategory("utils", 12, coveredOnly),
     ]);
   } catch (e) {
-    console.error("home fetch failed:", e);
+    const err = e as { message?: string; code?: string; details?: string; hint?: string };
+    console.error("home fetch failed:", {
+      message: err?.message ?? String(e),
+      code: err?.code,
+      details: err?.details,
+      hint: err?.hint,
+    });
   }
 
   const hasData = hero.length > 0 || trending.length > 0;

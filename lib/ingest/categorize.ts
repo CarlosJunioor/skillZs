@@ -4,7 +4,7 @@ const RULES: Array<{ category: Exclude<Category, null>; patterns: RegExp[] }> = 
   {
     category: "coding",
     patterns: [
-      /\b(debug|debugging|tdd|test|testing|lint|refactor|review|migrat|typescript|python|rust|go\b|java|database|sql)\b/i,
+      /\b(debug\w*|tdd|tests?|testing|lint|refactor|review|migrat|typescript|python|rust|go\b|java|database|sql)\b/i,
     ],
   },
   {

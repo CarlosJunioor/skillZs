@@ -2,10 +2,20 @@ import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase/server";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
 import { isSkillId, recordInteraction } from "@/lib/interactions";
+import { validateJsonMutationRequest } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const requestError = validateJsonMutationRequest(req);
+  if (requestError) {
+    const status =
+      requestError === "invalid content type" ? 415 :
+      requestError === "request body too large" ? 413 :
+      403;
+    return NextResponse.json({ ok: false, error: requestError }, { status });
+  }
+
   let body: { skillId?: string };
   try {
     body = await req.json();
@@ -31,6 +41,7 @@ export async function POST(req: Request) {
     if ((error as Error).name === "RateLimitError") {
       return NextResponse.json({ ok: false, error: "rate limit exceeded" }, { status: 429 });
     }
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 500 });
+    console.error("vote failed:", error);
+    return NextResponse.json({ ok: false, error: "server error" }, { status: 500 });
   }
 }
