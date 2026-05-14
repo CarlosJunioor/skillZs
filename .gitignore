@@ -4,5 +4,6 @@ out
 .env
 .env.local
 .vercel
+coverage/
 *.log
 .DS_Store

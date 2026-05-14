@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Bowlby_One_SC, Permanent_Marker, DM_Mono, Special_Elite } from "next/font/google";
-import Script from "next/script";
 import { SkillZsLogo } from "@/components/skillzs-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
@@ -61,8 +60,14 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={`${fontDisplay.variable} ${fontTag.variable} ${fontBody.variable} ${fontType.variable}`}>
+      <head>
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+        />
+      </head>
       <body>
-        <Script id="theme-bootstrap" strategy="beforeInteractive" nonce={nonce}>{THEME_BOOTSTRAP}</Script>
         <header className="relative border-b-[3px] border-[var(--color-ink)] bg-[var(--color-paper-2)]">
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-wrap items-end justify-between gap-4">
             <Link href="/" className="group flex items-end gap-3">

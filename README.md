@@ -56,6 +56,24 @@ vercel --prod
 
 Set the same env vars in Vercel project settings. Cron is declared in `vercel.json` (Sunday 6am UTC).
 Set `COVER_CRON_SECRET` when enabling `/api/cron/generate-covers` manually so cover generation does not share the ingest cron secret.
+The anonymous interaction rate limit trusts Vercel's `x-vercel-forwarded-for` header. If this app moves behind another proxy, update `lib/ip-hash.ts` to use that platform's trusted client-IP source.
+
+## Quality Ratchet
+
+Use the fixed gate before merging:
+
+```bash
+npm run quality
+```
+
+That runs ESLint with zero warnings allowed, then Vitest coverage against the current baseline in `vitest.config.ts`.
+CI runs the same gate on pull requests and pushes to `dev`.
+
+When new tests improve coverage, intentionally ratchet the baseline upward:
+
+```bash
+npm run ratchet
+```
 
 ## Adding a seed repo
 
