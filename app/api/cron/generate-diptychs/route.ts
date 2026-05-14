@@ -19,7 +19,12 @@ function parsePositiveInt(value: string | null, fallback: number, max: number): 
 }
 
 async function handle(req: Request) {
-  if (!isAuthorizedCronRequest(req, "DIPTYCH_CRON_SECRET")) {
+  // allowCronSecretFallback: this route is scheduled by Vercel cron (see
+  // vercel.json), which auto-injects Authorization: Bearer $CRON_SECRET. The
+  // DIPTYCH_CRON_SECRET still works for manual triggers from the backfill
+  // script. /api/regen and /api/admin/cost intentionally do NOT enable this
+  // fallback — they remain DIPTYCH_CRON_SECRET-only for isolation.
+  if (!isAuthorizedCronRequest(req, "DIPTYCH_CRON_SECRET", { allowCronSecretFallback: true })) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

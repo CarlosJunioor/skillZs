@@ -1,14 +1,32 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 
-export function isAuthorizedCronRequest(req: Request, primarySecretEnv?: string): boolean {
-  const candidate = bearerToken(req.headers.get("authorization")) ?? req.headers.get("x-cron-secret");
-  const expected = primarySecretEnv && process.env[primarySecretEnv]
-    ? process.env[primarySecretEnv]
-    : process.env.CRON_SECRET;
+export interface CronAuthOptions {
+  /**
+   * Also accept a match against CRON_SECRET when a route-specific secret is
+   * configured. Use ONLY for routes scheduled by Vercel cron (which auto-injects
+   * `Authorization: Bearer $CRON_SECRET`) — admin/manual-only routes should
+   * leave this off so the route-specific secret stays isolated.
+   */
+  allowCronSecretFallback?: boolean;
+}
 
-  if (!candidate || !expected) return false;
-  return safeEqual(candidate, expected);
+export function isAuthorizedCronRequest(
+  req: Request,
+  primarySecretEnv?: string,
+  options: CronAuthOptions = {},
+): boolean {
+  const candidate = bearerToken(req.headers.get("authorization")) ?? req.headers.get("x-cron-secret");
+  if (!candidate) return false;
+
+  const primary = primarySecretEnv ? process.env[primarySecretEnv] : undefined;
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (primary && safeEqual(candidate, primary)) return true;
+  if (!primary && cronSecret && safeEqual(candidate, cronSecret)) return true;
+  if (options.allowCronSecretFallback && cronSecret && safeEqual(candidate, cronSecret)) return true;
+
+  return false;
 }
 
 function bearerToken(value: string | null): string | null {

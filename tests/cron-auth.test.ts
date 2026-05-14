@@ -62,6 +62,35 @@ describe("isAuthorizedCronRequest", () => {
     )).toBe(true);
   });
 
+  it("with allowCronSecretFallback also accepts CRON_SECRET when route secret is set", () => {
+    process.env.CRON_SECRET = "vercel-cron";
+    process.env.COVER_CRON_SECRET = "manual-only";
+
+    // Without the fallback, CRON_SECRET is rejected (isolation default).
+    expect(isAuthorizedCronRequest(
+      withHeaders({ authorization: "Bearer vercel-cron" }),
+      "COVER_CRON_SECRET",
+    )).toBe(false);
+
+    // With the fallback, both secrets are accepted.
+    expect(isAuthorizedCronRequest(
+      withHeaders({ authorization: "Bearer vercel-cron" }),
+      "COVER_CRON_SECRET",
+      { allowCronSecretFallback: true },
+    )).toBe(true);
+    expect(isAuthorizedCronRequest(
+      withHeaders({ authorization: "Bearer manual-only" }),
+      "COVER_CRON_SECRET",
+      { allowCronSecretFallback: true },
+    )).toBe(true);
+    // Wrong tokens still rejected.
+    expect(isAuthorizedCronRequest(
+      withHeaders({ authorization: "Bearer not-either-of-them" }),
+      "COVER_CRON_SECRET",
+      { allowCronSecretFallback: true },
+    )).toBe(false);
+  });
+
   it("matches Bearer prefix case-insensitively and trims whitespace", () => {
     process.env.CRON_SECRET = "real-secret";
     expect(isAuthorizedCronRequest(

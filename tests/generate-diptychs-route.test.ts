@@ -59,17 +59,27 @@ describe("generate-diptychs cron route", () => {
     expect(await res.json()).toEqual({ ok: false, error: "invalid order" });
   });
 
-  it("prefers the diptych-specific cron secret when configured", async () => {
-    process.env.CRON_SECRET = "legacy-secret";
+  it("accepts both DIPTYCH_CRON_SECRET (manual) and CRON_SECRET (Vercel cron) — same wrong-token rejection", async () => {
+    // Route enables allowCronSecretFallback so Vercel cron's auto-injected
+    // CRON_SECRET works alongside the manual-trigger DIPTYCH_CRON_SECRET.
+    process.env.CRON_SECRET = "vercel-secret";
     process.env.DIPTYCH_CRON_SECRET = "diptych-secret";
 
-    const legacy = await GET(request("https://example.test/api/cron/generate-diptychs?limit=-1"));
-    expect(legacy.status).toBe(401);
+    // Bearer test-secret matches neither -> 401.
+    const wrong = await GET(request("https://example.test/api/cron/generate-diptychs?limit=-1"));
+    expect(wrong.status).toBe(401);
 
-    const specific = await GET(new Request("https://example.test/api/cron/generate-diptychs?limit=-1", {
+    // Manual trigger via DIPTYCH_CRON_SECRET -> reaches validation (400 invalid limit).
+    const manual = await GET(new Request("https://example.test/api/cron/generate-diptychs?limit=-1", {
       headers: { authorization: "Bearer diptych-secret" },
     }));
-    expect(specific.status).toBe(400);
+    expect(manual.status).toBe(400);
+
+    // Vercel cron via CRON_SECRET -> also reaches validation (400 invalid limit).
+    const cron = await GET(new Request("https://example.test/api/cron/generate-diptychs?limit=-1", {
+      headers: { authorization: "Bearer vercel-secret" },
+    }));
+    expect(cron.status).toBe(400);
   });
 
   it("starts generation with validated options and caps very large limits", async () => {
