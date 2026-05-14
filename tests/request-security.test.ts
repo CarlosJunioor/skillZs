@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateJsonMutationRequest } from "../lib/request-security";
+import { readJsonBodyWithLimit, validateJsonMutationRequest } from "../lib/request-security";
 
 function req(headers: HeadersInit): Request {
   return new Request("https://skillzs.test/api/vote", {
@@ -8,6 +8,18 @@ function req(headers: HeadersInit): Request {
       host: "skillzs.test",
       ...headers,
     },
+  });
+}
+
+function bodyReq(body: string): Request {
+  return new Request("https://skillzs.test/api/vote", {
+    method: "POST",
+    headers: {
+      host: "skillzs.test",
+      "content-type": "application/json",
+      origin: "https://skillzs.test",
+    },
+    body,
   });
 }
 
@@ -45,5 +57,25 @@ describe("validateJsonMutationRequest", () => {
       "content-type": "application/json",
       "sec-fetch-site": "cross-site",
     }))).toBe("cross-site request");
+  });
+
+  it("parses small JSON bodies", async () => {
+    await expect(readJsonBodyWithLimit(bodyReq('{"skillId":"abc"}'))).resolves.toEqual({
+      ok: true,
+      body: { skillId: "abc" },
+    });
+  });
+
+  it("rejects oversized streamed bodies even without content-length", async () => {
+    const result = await readJsonBodyWithLimit(bodyReq(JSON.stringify({ value: "x".repeat(4_096) })));
+
+    expect(result).toEqual({ ok: false, error: "request body too large" });
+  });
+
+  it("rejects malformed JSON bodies", async () => {
+    await expect(readJsonBodyWithLimit(bodyReq("{"))).resolves.toEqual({
+      ok: false,
+      error: "bad json",
+    });
   });
 });

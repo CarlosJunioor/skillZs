@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runCoverGeneration } from "@/lib/covers/run";
 import type { CoverQuality } from "@/lib/covers/generate";
+import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -8,15 +9,6 @@ export const dynamic = "force-dynamic";
 
 const QUALITIES = new Set<CoverQuality>(["low", "medium", "high"]);
 const ORDERS = new Set(["hotness", "first_seen"]);
-
-function authorized(req: Request): boolean {
-  const headerSecret =
-    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
-    req.headers.get("x-cron-secret");
-  const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
-  return headerSecret === expected;
-}
 
 function parsePositiveInt(value: string | null, fallback: number, max: number): number | null {
   if (value === null) return fallback;
@@ -27,7 +19,7 @@ function parsePositiveInt(value: string | null, fallback: number, max: number): 
 }
 
 async function handle(req: Request) {
-  if (!authorized(req)) {
+  if (!isAuthorizedCronRequest(req, "COVER_CRON_SECRET")) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

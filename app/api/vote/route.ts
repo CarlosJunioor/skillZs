@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseService } from "@/lib/supabase/server";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
 import { isSkillId, recordInteraction } from "@/lib/interactions";
-import { validateJsonMutationRequest } from "@/lib/request-security";
+import { readJsonBodyWithLimit, validateJsonMutationRequest } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -16,13 +16,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: requestError }, { status });
   }
 
-  let body: { skillId?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "bad json" }, { status: 400 });
+  const parsed = await readJsonBodyWithLimit<unknown>(req);
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { ok: false, error: parsed.error },
+      { status: parsed.error === "request body too large" ? 413 : 400 },
+    );
   }
-  const skillId = body?.skillId;
+  const body = parsed.body;
+  const skillId = typeof body === "object" && body !== null
+    ? (body as { skillId?: unknown }).skillId
+    : undefined;
   if (!isSkillId(skillId)) {
     return NextResponse.json({ ok: false, error: "invalid skillId" }, { status: 400 });
   }

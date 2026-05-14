@@ -1,6 +1,11 @@
-const MAX_JSON_BODY_BYTES = 4_096;
+export const MAX_JSON_BODY_BYTES = 4_096;
 
 export type MutationRequestError = "invalid content type" | "request body too large" | "cross-site request";
+export type JsonBodyError = "bad json" | "request body too large";
+
+export type JsonBodyResult<T> =
+  | { ok: true; body: T }
+  | { ok: false; error: JsonBodyError };
 
 export function validateJsonMutationRequest(req: Request): MutationRequestError | null {
   const contentType = req.headers.get("content-type") ?? "";
@@ -14,6 +19,44 @@ export function validateJsonMutationRequest(req: Request): MutationRequestError 
   if (isCrossSiteBrowserRequest(req)) return "cross-site request";
 
   return null;
+}
+
+export async function readJsonBodyWithLimit<T>(req: Request): Promise<JsonBodyResult<T>> {
+  if (!req.body) return { ok: false, error: "bad json" };
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      received += value.byteLength;
+      if (received > MAX_JSON_BODY_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return { ok: false, error: "request body too large" };
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, error: "bad json" };
+  }
+
+  const body = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    return { ok: true, body: JSON.parse(new TextDecoder().decode(body)) as T };
+  } catch {
+    return { ok: false, error: "bad json" };
+  }
 }
 
 function isJsonContentType(value: string): boolean {
