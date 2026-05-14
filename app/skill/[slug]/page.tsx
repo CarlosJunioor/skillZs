@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { VoteButton } from "@/components/vote-button";
 import { SkillRow } from "@/components/skill-row";
+import { InstallPill } from "@/components/install-pill";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import {
   fetchByCategory,
@@ -36,16 +37,22 @@ export default async function SkillPage({
 
       {/* Comic page composition */}
       <div className="grid md:grid-cols-[1.05fr_1fr] gap-6">
-        {/* Cover panel */}
+        {/* Visual panel: AI diptych first, cover image second, glyph fallback */}
         <div className="ink-frame relative h-[340px] md:h-[480px] overflow-hidden grain bg-[var(--color-mauve)]">
-          {skill.cover_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={skill.cover_url} alt={skill.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="display text-7xl text-[var(--color-paper)]">?!</span>
-            </div>
-          )}
+          {(() => {
+            const visual = skill.diptych_url ?? skill.cover_url;
+            if (visual) {
+              return (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={visual} alt={skill.tagline ?? skill.name} className="w-full h-full object-cover" />
+              );
+            }
+            return (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="display text-7xl text-[var(--color-paper)]">?!</span>
+              </div>
+            );
+          })()}
           <span className="absolute top-4 left-4 stamp text-base">SKILL #{skill.slug.slice(-4).toUpperCase()}</span>
         </div>
 
@@ -61,12 +68,18 @@ export default async function SkillPage({
             <h1 className="display text-4xl md:text-6xl leading-[0.92] mb-4 break-words">
               <span className="drip">{skill.name}</span>
             </h1>
+            {skill.tagline && (
+              <p className="tag-font text-lg md:text-xl text-[var(--color-grape)] mb-3 leading-snug">
+                {skill.tagline}
+              </p>
+            )}
             <p className="type-font text-base leading-relaxed">
               {skill.description}
             </p>
           </div>
 
           <div className="mt-8 space-y-4">
+            <InstallPill slug={skill.slug} skillId={skill.id} />
             <div className="flex flex-wrap gap-2">
               <VoteButton skillId={skill.id} initialCount={skill.vote_count} variant="vote" />
               <VoteButton skillId={skill.id} initialCount={skill.use_count} variant="use" />

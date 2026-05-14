@@ -59,11 +59,11 @@ export function HeroCarousel({ skills, intervalMs = 7000 }: Props) {
         >
           <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] h-full">
             <div className="relative h-full border-b-[3px] md:border-b-0 md:border-r-[3px] border-[var(--color-ink)] overflow-hidden">
-              {skill.cover_url && (
+              {(skill.diptych_url ?? skill.cover_url) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={skill.cover_url}
-                  alt={skill.name}
+                  src={skill.diptych_url ?? skill.cover_url ?? ""}
+                  alt={skill.tagline ?? skill.name}
                   className="w-full h-full object-cover"
                 />
               )}
@@ -80,7 +80,12 @@ export function HeroCarousel({ skills, intervalMs = 7000 }: Props) {
                 <h1 className="display text-5xl md:text-7xl leading-[0.92] mb-4 break-words">
                   <span className="drip">{skill.name}</span>
                 </h1>
-                <p className="type-font text-base md:text-lg leading-relaxed line-clamp-5 max-w-xl">
+                {skill.tagline && (
+                  <p className="tag-font text-xl md:text-2xl text-[var(--color-grape)] mb-3 leading-snug">
+                    {skill.tagline}
+                  </p>
+                )}
+                <p className="type-font text-base md:text-lg leading-relaxed line-clamp-4 max-w-xl">
                   {skill.description}
                 </p>
               </div>

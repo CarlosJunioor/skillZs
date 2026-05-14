@@ -3,7 +3,7 @@ import { supabaseAnon } from "./supabase/server";
 import type { SkillStats } from "./types";
 
 const STATS_COLUMNS =
-  "id, slug, name, description, cover_url, category, repo_url, source_repo, github_stars, vote_count, use_count, hotness, first_seen, last_seen";
+  "id, slug, name, description, cover_url, diptych_url, tagline, before_text, after_text, category, repo_url, source_repo, github_stars, vote_count, use_count, hotness, first_seen, last_seen";
 
 export type SortKey = "hot" | "new" | "votes" | "uses" | "stars";
 

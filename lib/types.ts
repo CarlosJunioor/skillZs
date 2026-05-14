@@ -6,6 +6,14 @@ export interface SkillRow {
   name: string;
   description: string;
   cover_url: string | null;
+  /** AI-generated card visual (3:2 before/after). Falls back to cover_url. */
+  diptych_url?: string | null;
+  /** AI-condensed verb-led card headline. */
+  tagline?: string | null;
+  /** AI scene for the BEFORE panel; shown as fallback when diptych_url is null. */
+  before_text?: string | null;
+  /** AI scene for the AFTER panel; shown as fallback when diptych_url is null. */
+  after_text?: string | null;
   category: Category;
   repo_url: string;
   source_repo: string;
