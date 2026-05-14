@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import path from "node:path";
 
-const src = "C:/Users/Carlos Junior/Desktop/skillZsfavi.png";
+const src = "C:/Users/Carlos Junior/Desktop/skillZs-removebg-preview.png";
 const out = "C:/Users/Carlos Junior/claude-projects/skillZs/app";
 
 const meta = await sharp(src).metadata();
