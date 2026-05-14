@@ -18,7 +18,7 @@ interface Props {
  * paste the string and the `skillzs` CLI does runtime detection.
  */
 export function InstallPill({ slug, disabled, skillId }: Props) {
-  const cmd = `npx skillzs install ${slug}`;
+  const cmd = `npx github:CarlosJunioor/skillzs-cli install ${slug}`;
   const [copied, setCopied] = useState(false);
 
   async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
