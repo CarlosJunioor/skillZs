@@ -24,6 +24,7 @@ const CATS: Array<{ key: string; label: string }> = [
 ];
 
 const PAGE = 60;
+const MAX_PAGE = 100;
 
 export default async function BrowsePage({
   searchParams,
@@ -34,7 +35,10 @@ export default async function BrowsePage({
   const sort = (SORTS.find((s) => s.key === sp.sort)?.key ?? "hot") as SortKey;
   const cat = CATS.find((c) => c.key === sp.cat)?.key ?? "all";
   const coveredOnly = sp.covered === "1";
-  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+  const requestedPage = Number(sp.page ?? "1");
+  const page = Number.isInteger(requestedPage)
+    ? Math.min(MAX_PAGE, Math.max(1, requestedPage))
+    : 1;
   const offset = (page - 1) * PAGE;
 
   const { skills, total } = await fetchBrowse({

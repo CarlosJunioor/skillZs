@@ -17,14 +17,16 @@ Next.js 16 (App Router) | Tailwind v4 | Framer Motion | Supabase | Vercel
 2. **Spin up Supabase**
 
    - Create project at https://supabase.com.
-   - Open SQL Editor and run `supabase/migrations/0001_initial.sql`.
+   - Apply every file in `supabase/migrations/` in numeric order.
+     Preferred: use the Supabase CLI with `supabase db push`.
+     SQL Editor fallback: run `0001_initial.sql` through the latest migration, in order.
    - Copy `Project URL`, `anon` key, `service_role` key into `.env.local`.
 
 3. **Configure env**
 
    ```bash
    cp .env.example .env.local
-   # fill in all 5 values
+   # fill in all required values
    ```
 
 4. **Trigger first ingest**
@@ -44,7 +46,7 @@ Next.js 16 (App Router) | Tailwind v4 | Framer Motion | Supabase | Vercel
 - `app/api/vote` / `app/api/use` - anon POST endpoints, dedup and rate-limited by sha256(ip + salt + day).
 - `app/api/cron/ingest` - scans `lib/ingest/sources.ts`, walks GitHub trees for `SKILL.md`, upserts to Supabase.
 - `lib/ingest/*` - pipeline (sources, github client, frontmatter parser, categorizer).
-- `supabase/migrations/0001_initial.sql` - `skills`, `votes`, `usage_clicks` tables + `skill_stats` matview.
+- `supabase/migrations/*` - tables, materialized views, RLS, function grants, and public-read hardening.
 
 ## Deploy
 
@@ -53,6 +55,7 @@ vercel --prod
 ```
 
 Set the same env vars in Vercel project settings. Cron is declared in `vercel.json` (Sunday 6am UTC).
+Set `COVER_CRON_SECRET` when enabling `/api/cron/generate-covers` manually so cover generation does not share the ingest cron secret.
 
 ## Adding a seed repo
 
