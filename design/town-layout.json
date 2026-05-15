@@ -1,0 +1,9 @@
+[
+  { "slug": "zeke",               "x": 0, "y": 0, "w": 2, "h": 2 },
+  { "slug": "matt-pocock",        "x": 2, "y": 0, "w": 1, "h": 1 },
+  { "slug": "theo-browne",        "x": 3, "y": 0, "w": 1, "h": 1 },
+  { "slug": "geoffrey-huntley",   "x": 4, "y": 0, "w": 1, "h": 1 },
+  { "slug": "cole-medin",         "x": 2, "y": 1, "w": 1, "h": 1 },
+  { "slug": "mitchell-hashimoto", "x": 3, "y": 1, "w": 2, "h": 1 },
+  { "slug": "gergely-orosz",      "x": 0, "y": 2, "w": 2, "h": 1 }
+]
