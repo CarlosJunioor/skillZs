@@ -55,6 +55,7 @@ vercel --prod
 ```
 
 Set the same env vars in Vercel project settings. Cron is declared in `vercel.json` (Sunday 6am UTC).
+Set `NEXT_PUBLIC_SITE_URL` to the production origin so canonical URLs, `sitemap.xml`, `robots.txt`, and social preview metadata point at the live domain.
 Set `COVER_CRON_SECRET` when enabling `/api/cron/generate-covers` manually so cover generation does not share the ingest cron secret.
 The anonymous interaction rate limit trusts Vercel's `x-vercel-forwarded-for` header. If this app moves behind another proxy, update `lib/ip-hash.ts` to use that platform's trusted client-IP source.
 

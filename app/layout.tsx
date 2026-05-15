@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Bowlby_One_SC, Permanent_Marker, DM_Mono, Special_Elite } from "next/font/google";
+import { JsonLd } from "@/components/json-ld";
 import { SkillZsLogo } from "@/components/skillzs-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { organizationJsonLd, siteConfig, websiteJsonLd } from "@/lib/seo";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import "./globals.css";
 
@@ -33,14 +35,50 @@ const fontType = Special_Elite({
 });
 
 export const metadata: Metadata = {
-  title: "skillZs - the underground for Claude skills",
-  description:
-    "Hand-tagged catalog of Claude skills. Vote, see what's hot, no GitHub spelunking.",
-  openGraph: {
-    title: "skillZs",
-    description: "find dope claude skills.",
-    type: "website",
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
   },
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  category: "technology",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: siteConfig.title,
+    description: siteConfig.description,
+    url: "/",
+    siteName: siteConfig.name,
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        alt: `${siteConfig.name} Claude skills catalog`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 const NAV = [
@@ -68,6 +106,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <JsonLd data={[websiteJsonLd(), organizationJsonLd()]} />
         <header className="relative border-b-[3px] border-[var(--color-ink)] bg-[var(--color-paper-2)]">
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-wrap items-end justify-between gap-4">
             <Link href="/" className="group flex items-end gap-3">

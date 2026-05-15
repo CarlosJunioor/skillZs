@@ -99,6 +99,16 @@ export async function fetchSkillBySlug(slug: string): Promise<SkillStats | null>
   return (data as SkillStats | null) ?? null;
 }
 
+export async function fetchSitemapSkills(limit = 50_000): Promise<Array<Pick<SkillStats, "slug" | "first_seen" | "last_seen">>> {
+  const { data, error } = await supabaseAnon()
+    .from("skill_stats")
+    .select("slug, first_seen, last_seen")
+    .order("last_seen", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Array<Pick<SkillStats, "slug" | "first_seen" | "last_seen">>;
+}
+
 export async function fetchReadme(slug: string): Promise<string | null> {
   const { data, error } = await supabaseAnon()
     .from("skills")

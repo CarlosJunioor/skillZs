@@ -1,11 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { JsonLd } from "@/components/json-ld";
 import { VoteButton } from "@/components/vote-button";
 import { SkillRow } from "@/components/skill-row";
 import { InstallPill } from "@/components/install-pill";
 import { compactNumber, categoryLabel } from "@/lib/format";
+import {
+  breadcrumbJsonLd,
+  buildPageMetadata,
+  categoryRoute,
+  categoryTitle,
+  skillDescription,
+  skillImage,
+  skillJsonLd,
+} from "@/lib/seo";
 import {
   fetchByCategory,
   fetchReadme,
@@ -13,6 +24,32 @@ import {
 } from "@/lib/stats";
 
 export const revalidate = 120;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const skill = await fetchSkillBySlug(slug);
+  if (!skill) {
+    return buildPageMetadata({
+      title: "Skill not found",
+      description: "This skillZs skill could not be found.",
+      path: `/skill/${slug}`,
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    title: `${skill.name} Claude skill`,
+    description: skillDescription(skill),
+    path: `/skill/${skill.slug}`,
+    image: skillImage(skill),
+    imageAlt: skill.tagline ?? skill.name,
+    type: "article",
+  });
+}
 
 export default async function SkillPage({
   params,
@@ -28,9 +65,21 @@ export default async function SkillPage({
     skill.category ? fetchByCategory(skill.category, 8) : Promise.resolve([]),
   ]);
   const relatedFiltered = related.filter((s) => s.id !== skill.id);
+  const categoryPath = categoryRoute(skill.category);
+  const categoryCrumb = categoryTitle(skill.category);
 
   return (
     <article className="pt-6">
+      <JsonLd
+        data={[
+          skillJsonLd(skill),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: categoryCrumb, path: categoryPath },
+            { name: skill.name, path: `/skill/${skill.slug}` },
+          ]),
+        ]}
+      />
       <Link href="/" className="tag-font text-[var(--color-grape)] inline-block mb-4 hover:underline">
         ← back to zine
       </Link>

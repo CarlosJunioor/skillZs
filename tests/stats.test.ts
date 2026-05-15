@@ -29,6 +29,7 @@ import {
   fetchByCategory,
   fetchNew,
   fetchReadme,
+  fetchSitemapSkills,
   fetchSkillBySlug,
   fetchTrending,
 } from "../lib/stats";
@@ -176,6 +177,20 @@ describe("stats queries", () => {
     await expect(fetchReadme("demo")).resolves.toBe("# Demo");
     expect(readme.calls).toContainEqual({ method: "from", table: "skills" });
     expect(readme.calls).toContainEqual({ method: "select", columns: "readme_md" });
+  });
+
+  it("fetchSitemapSkills reads URL and freshness fields for metadata routes", async () => {
+    const row = { slug: "demo", first_seen: "2026-01-01", last_seen: "2026-02-01" };
+    const { client, calls } = createClient({ data: [row] });
+    supabaseMock.client = client;
+
+    await expect(fetchSitemapSkills(2)).resolves.toEqual([row]);
+    expect(calls).toEqual([
+      { method: "from", table: "skill_stats" },
+      { method: "select", columns: "slug, first_seen, last_seen" },
+      { method: "order", column: "last_seen", options: { ascending: false } },
+      { method: "limit", count: 2 },
+    ]);
   });
 
   it("throws Supabase errors instead of hiding them", async () => {
