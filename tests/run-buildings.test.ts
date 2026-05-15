@@ -167,6 +167,8 @@ describe("runBuildingGeneration", () => {
     expect(update.building_status).toBe("done");
     expect(update.building_cost_usd).toBeCloseTo(0.04, 6);
     expect(update.building_prompt).toMatch(/^v1-fisheye-peek:/);
+    // Buildings are NOT in skill_stats matview — runner must not refresh it.
+    expect(mocks.state!.rpcCalls.map((c) => c.name)).not.toContain("refresh_skill_stats");
   });
 
   it("skips candidates that cannot be claimed", async () => {
