@@ -82,6 +82,7 @@ export const metadata: Metadata = {
 };
 
 const NAV = [
+  { href: "/zine", label: "zine" },
   { href: "/browse", label: "browse all" },
   { href: "/category/coding", label: "coding" },
   { href: "/category/creative", label: "creative" },
@@ -117,7 +118,7 @@ export default async function RootLayout({
                 aria-hidden
                 className="hidden sm:block w-[64px] h-[64px] rounded-full border-[2.5px] border-[var(--color-ink)] shadow-[3px_3px_0_var(--shadow-color)] rotate-[-6deg] mb-1 transition-transform group-hover:rotate-[6deg]"
               />
-              <SkillZsLogo size="md" />
+              <SkillZsLogo size="md" animate />
               <span className="tag-font hidden lg:inline text-[var(--color-grape)] text-lg rotate-[-3deg] mb-2">
                 {"\u2726"} underground catalog
               </span>

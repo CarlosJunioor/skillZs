@@ -6,12 +6,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
+const ASSETS = new Set(["avatar", "building"]);
 
 /**
- * Admin endpoint: requeue a single character for avatar regeneration.
+ * Admin endpoint: requeue a single character asset for regeneration.
  *
- * Resets avatar_status from 'done' or 'failed' back to 'pending' and clears the
- * error. The next /api/cron/generate-avatars run picks it up.
+ * Query param `asset` selects the lifecycle column to reset:
+ *   - `avatar` (default, back-compat) → avatar_status='pending'
+ *   - `building`                      → building_status='pending'
+ *
+ * The next /api/cron/generate-{avatars,buildings} run picks it up.
  *
  * Auth: DIPTYCH_CRON_SECRET only (no cron fallback).
  */
@@ -23,15 +27,24 @@ async function handle(req: Request, slug: string) {
     return NextResponse.json({ ok: false, error: "invalid slug" }, { status: 400 });
   }
 
+  const url = new URL(req.url);
+  const asset = url.searchParams.get("asset") ?? "avatar";
+  if (!ASSETS.has(asset)) {
+    return NextResponse.json({ ok: false, error: "invalid asset" }, { status: 400 });
+  }
+
+  const statusCol = asset === "building" ? "building_status" : "avatar_status";
+  const errorCol = asset === "building" ? "building_error" : "avatar_error";
+
   const sb = supabaseService();
   const { data, error } = await sb
     .from("characters")
     .update({
-      avatar_status: "pending",
-      avatar_error: null,
+      [statusCol]: "pending",
+      [errorCol]: null,
     })
     .eq("slug", slug)
-    .select("slug, avatar_status")
+    .select(`slug, ${statusCol}`)
     .maybeSingle();
 
   if (error) {

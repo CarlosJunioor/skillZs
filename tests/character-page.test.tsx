@@ -49,6 +49,7 @@ function makeCharacter(over: Partial<Character> = {}): Character {
     x_handle: "mpocock1",
     site_url: "https://www.totaltypescript.com",
     avatar_url: "https://blob.test/avatars/matt-pocock.png",
+    building_url: null,
     ...over,
   };
 }

@@ -3,7 +3,7 @@ import { supabaseAnon } from "./supabase/server";
 import type { Character, SkillStats } from "./types";
 
 const CHARACTER_PUBLIC_COLUMNS =
-  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url";
+  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url, building_url";
 
 const STATS_COLUMNS =
   "id, slug, name, description, cover_url, diptych_url, tagline, before_text, after_text, category, repo_url, source_repo, github_stars, vote_count, use_count, hotness, first_seen, last_seen, character_id, character_slug, character_name, character_avatar_url";
@@ -148,4 +148,30 @@ export async function fetchSkillsByCharacter(
     .limit(limit);
   if (error) throw error;
   return (data ?? []) as SkillStats[];
+}
+
+/**
+ * All characters, ordered by created_at, for the /town map. Includes
+ * avatar_url + building_url so tiles can render placeholders consistently.
+ */
+export async function fetchCharactersForTown(): Promise<Character[]> {
+  const { data, error } = await supabaseAnon()
+    .from("characters")
+    .select(CHARACTER_PUBLIC_COLUMNS)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Character[];
+}
+
+/**
+ * Lightweight slug pull for sitemap.ts. created_at is service-role-only per
+ * the column grant; use new Date() for lastModified at the call site.
+ */
+export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>> {
+  const { data, error } = await supabaseAnon()
+    .from("characters")
+    .select("slug")
+    .order("slug", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Array<{ slug: string }>;
 }

@@ -1,105 +1,99 @@
-import { HeroCarousel } from "@/components/hero-carousel";
+// app/page.tsx — Aquarius town map (sub-project C).
+// The old zine homepage now lives at /zine.
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { TownMap } from "@/components/town-map";
+import { BuildingDrawer } from "@/components/building-drawer";
+import { DrawerSkeleton } from "@/components/drawer-skeleton";
 import { JsonLd } from "@/components/json-ld";
-import { Manifesto } from "@/components/manifesto";
-import { SkillRow } from "@/components/skill-row";
-import { SortTabs } from "@/components/sort-tabs";
-import { collectionJsonLd, siteConfig } from "@/lib/seo";
-import {
-  fetchByCategory,
-  fetchHero,
-  fetchNew,
-  fetchTrending,
-  type SortKey,
-} from "@/lib/stats";
+import { loadTownLayout } from "@/lib/town/layout";
+import { fetchCharacterBySlug } from "@/lib/stats";
+import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 
-export const revalidate = 300;
+export const revalidate = 120;
 
-const SORT_TITLE: Record<SortKey, string> = {
-  hot:   "what's hot",
-  new:   "fresh drops",
-  votes: "most voted",
-  uses:  "most used",
-  stars: "most starred",
-};
-
-export default async function HomePage({
+export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; covered?: string }>;
-}) {
+  searchParams: Promise<{ building?: string }>;
+}): Promise<Metadata> {
   const sp = await searchParams;
-  const valid = ["hot", "new", "votes", "uses", "stars"] as const;
-  const sort: SortKey = (valid as readonly string[]).includes(sp.sort ?? "")
-    ? (sp.sort as SortKey)
-    : "hot";
-  const coveredOnly = sp.covered === "1";
+  if (sp.building) {
+    const character = await fetchCharacterBySlug(sp.building);
+    if (character) {
+      return buildPageMetadata({
+        title: `${character.name} on skillZs`,
+        description: character.bio ?? character.role ?? `Skills shipped by ${character.name}.`,
+        path: `/character/${character.slug}`,
+        ...(character.avatar_url ? { image: character.avatar_url } : {}),
+        imageAlt: character.name,
+        type: "article",
+      });
+    }
+  }
+  return buildPageMetadata({
+    title: `${siteConfig.title} — town`,
+    description: "Aquarius town map. Click a building to meet the character behind the skills.",
+    path: "/",
+  });
+}
 
-  let hero = [] as Awaited<ReturnType<typeof fetchHero>>;
-  let trending = [] as Awaited<ReturnType<typeof fetchTrending>>;
-  let fresh = [] as Awaited<ReturnType<typeof fetchNew>>;
-  let coding = [] as Awaited<ReturnType<typeof fetchByCategory>>;
-  let creative = [] as Awaited<ReturnType<typeof fetchByCategory>>;
-  let agents = [] as Awaited<ReturnType<typeof fetchByCategory>>;
-  let utils = [] as Awaited<ReturnType<typeof fetchByCategory>>;
+interface PageProps {
+  searchParams: Promise<{ building?: string }>;
+}
 
-  try {
-    [hero, trending, fresh, coding, creative, agents, utils] = await Promise.all([
-      fetchHero(5, coveredOnly),
-      fetchTrending(24, sort, coveredOnly),
-      fetchNew(12, coveredOnly),
-      fetchByCategory("coding", 12, coveredOnly),
-      fetchByCategory("creative", 12, coveredOnly),
-      fetchByCategory("agent", 12, coveredOnly),
-      fetchByCategory("utils", 12, coveredOnly),
-    ]);
-  } catch (e) {
-    const err = e as { message?: string; code?: string; details?: string; hint?: string };
-    console.error("home fetch failed:", {
-      message: err?.message ?? String(e),
-      code: err?.code,
-      details: err?.details,
-      hint: err?.hint,
-    });
+export default async function TownPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const tiles = await loadTownLayout();
+
+  // Eagerly resolve the drawer character so redirect() fires before rendering,
+  // and so renderToString in tests can see the resolved data synchronously.
+  let drawerCharacter: Awaited<ReturnType<typeof fetchCharacterBySlug>> = null;
+  if (sp.building) {
+    drawerCharacter = await fetchCharacterBySlug(sp.building);
+    if (!drawerCharacter) {
+      redirect("/");
+    }
   }
 
-  const hasData = hero.length > 0 || trending.length > 0;
-  const featured = hero.length > 0 ? hero : trending.slice(0, 5);
+  const townItemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": absoluteUrl("/#town"),
+    name: "skillZs Aquarius town",
+    numberOfItems: tiles.length,
+    itemListElement: tiles.map((t, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: absoluteUrl(`/character/${t.character.slug}`),
+      name: t.character.name,
+    })),
+  };
 
   return (
     <div className="pt-2">
-      <JsonLd
-        data={collectionJsonLd({
-          path: "/",
-          name: siteConfig.title,
-          description: siteConfig.description,
-          skills: featured,
-        })}
-      />
-      <HeroCarousel skills={hero} />
+      {/* JsonLd is an async RSC (reads nonce from headers); wrapped in Suspense so
+          renderToString in Vitest (which cannot await async RSCs) sees the fallback
+          instead of throwing "component suspended". In production/streaming SSR the
+          script tag is flushed as soon as headers() resolves. */}
+      <Suspense fallback={null}>
+        <JsonLd data={townItemList} />
+      </Suspense>
+      <h1 className="display text-5xl md:text-7xl leading-none mb-3">
+        <span className="drip">Aquarius</span>
+      </h1>
+      <p className="type-font text-base text-[var(--color-rust)] mb-6">
+        a town of seven storefronts. tap any building to meet the character.
+      </p>
 
-      {!hasData && (
-        <div className="ink-frame mt-10 p-10 text-center bg-[var(--color-paper-2)]">
-          <h2 className="display text-4xl mb-3">empty zine</h2>
-          <p className="type-font mb-4">no skills yet. trigger ingest:</p>
-          <code className="type-font bg-[var(--color-ink)] text-[var(--color-paper)] px-4 py-2 inline-block">
-            POST /api/cron/ingest
-          </code>
-        </div>
+      <TownMap tiles={tiles} />
+
+      {drawerCharacter && (
+        <Suspense fallback={<DrawerSkeleton />}>
+          <BuildingDrawer character={drawerCharacter} />
+        </Suspense>
       )}
-
-      <Manifesto />
-
-      <SortTabs />
-
-      <SkillRow title={SORT_TITLE[sort]} skills={trending} size="md" />
-
-      {sort !== "new" && (
-        <SkillRow title="fresh drops" skills={fresh} />
-      )}
-      <SkillRow title="coding" skills={coding} />
-      <SkillRow title="creative" skills={creative} watermark />
-      <SkillRow title="agents" skills={agents} />
-      <SkillRow title="utils" skills={utils} />
     </div>
   );
 }

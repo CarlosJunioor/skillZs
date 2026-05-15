@@ -55,6 +55,8 @@ export interface Character {
   x_handle: string | null;
   site_url: string | null;
   avatar_url: string | null;
+  /** Storefront tile for the town map. Null until the building cron has run. */
+  building_url: string | null;
 }
 
 export interface CharacterStats extends Character {

@@ -102,4 +102,42 @@ describe("POST /api/regen/character/[slug]", () => {
     });
     expect(mocks.state.lastFilter).toEqual({ column: "slug", value: "zeke" });
   });
+
+  it("defaults to avatar reset when asset query param is absent (back-compat)", async () => {
+    mocks.state.row = { slug: "zeke", avatar_status: "pending" };
+    const res = await call("zeke", { secret: "diptych-secret" });
+    expect(res.status).toBe(200);
+    expect(mocks.state.lastPayload).toEqual({
+      avatar_status: "pending",
+      avatar_error: null,
+    });
+  });
+
+  it("resets building_status when ?asset=building is passed", async () => {
+    mocks.state.row = { slug: "zeke", avatar_status: "done" };
+    const res = await POST(
+      new Request("https://example.test/api/regen/character/zeke?asset=building", {
+        method: "POST",
+        headers: { authorization: "Bearer diptych-secret" },
+      }),
+      { params: Promise.resolve({ slug: "zeke" }) },
+    );
+    expect(res.status).toBe(200);
+    expect(mocks.state.lastPayload).toEqual({
+      building_status: "pending",
+      building_error: null,
+    });
+  });
+
+  it("rejects an unknown asset value", async () => {
+    const res = await POST(
+      new Request("https://example.test/api/regen/character/zeke?asset=eyebrow", {
+        method: "POST",
+        headers: { authorization: "Bearer diptych-secret" },
+      }),
+      { params: Promise.resolve({ slug: "zeke" }) },
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "invalid asset" });
+  });
 });

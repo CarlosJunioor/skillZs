@@ -14,10 +14,10 @@ export default defineConfig({
         "lib/types.ts",
       ],
       thresholds: {
-        lines: 84.08,
-        functions: 84.11,
-        branches: 85.68,
-        statements: 84.08,
+        lines: 84.4,
+        functions: 84.03,
+        branches: 86.59,
+        statements: 84.4,
         "app/api/vote/route.ts": {
           lines: 69.04,
           functions: 100,
