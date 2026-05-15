@@ -78,7 +78,6 @@ export default async function TownPage({ searchParams }: PageProps) {
           instead of throwing "component suspended". In production/streaming SSR the
           script tag is flushed as soon as headers() resolves. */}
       <Suspense fallback={null}>
-        {/* @ts-expect-error async RSC in Suspense */}
         <JsonLd data={townItemList} />
       </Suspense>
       <h1 className="display text-5xl md:text-7xl leading-none mb-3">
