@@ -10,6 +10,7 @@ import { parseSkill, slugify } from "./parse-skill";
 import { categorize } from "./categorize";
 import { supabaseService } from "../supabase/server";
 import { contentHash } from "../diptych/hash";
+import { attributeSkillToCharacter } from "../character/attribute";
 
 export interface IngestStats {
   reposScanned: number;
@@ -75,6 +76,8 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
             priorHash !== newHash &&
             priorDiptychStatus === "done";
 
+          const attribution = await attributeSkillToCharacter(sb, parsed.meta);
+
           const { error } = await sb.from("skills").upsert(
             {
               slug,
@@ -88,6 +91,9 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
               github_stars: meta.stargazers_count,
               readme_md: parsed.body,
               content_hash: newHash,
+              ...(attribution.character_id !== null
+                ? { character_id: attribution.character_id }
+                : {}),
               ...(shouldRequeueDiptych ? { diptych_status: "pending" } : {}),
               last_seen: now,
             },

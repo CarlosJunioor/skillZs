@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "ingest": "tsx scripts/ingest-local.ts",
     "backfill:diptychs": "node scripts/backfill-diptychs.mjs",
+    "backfill:avatars": "node scripts/backfill-avatars.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

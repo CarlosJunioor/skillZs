@@ -98,4 +98,45 @@ describe("SkillCard", () => {
     const stale = renderToString(<SkillCard skill={makeSkill()} />);
     expect(stale).not.toContain(">NEW<");
   });
+
+  it("renders the CharacterChip in the byline slot when character_id is set", () => {
+    const html = renderToString(
+      <SkillCard
+        skill={makeSkill({
+          character_id: "char-1",
+          character_slug: "matt-pocock",
+          character_name: "Matt Pocock",
+          character_avatar_url: "https://blob.test/avatars/matt-pocock.png",
+        })}
+      />,
+    );
+    expect(html).toContain('href="/character/matt-pocock"');
+    expect(html).toContain("Matt Pocock");
+    expect(html).toContain('src="https://blob.test/avatars/matt-pocock.png"');
+  });
+
+  it("shows the chip with the mauve placeholder when avatar has not been generated yet", () => {
+    const html = renderToString(
+      <SkillCard
+        skill={makeSkill({
+          character_id: "char-1",
+          character_slug: "zeke",
+          character_name: "Zeke",
+          character_avatar_url: null,
+        })}
+      />,
+    );
+    expect(html).toContain('href="/character/zeke"');
+    expect(html).toContain("bg-[var(--color-mauve)]");
+  });
+
+  it("keeps the original name byline when no character is attributed", () => {
+    const html = renderToString(
+      <SkillCard skill={makeSkill({ tagline: "Catch bugs before merge" })} />,
+    );
+    // No chip link
+    expect(html).not.toContain("/character/");
+    // Plain byline still present
+    expect(html).toContain("PR Review");
+  });
 });

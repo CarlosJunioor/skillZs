@@ -3,6 +3,7 @@ import { compactNumber, categoryLabel } from "@/lib/format";
 import type { SkillStats } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { InstallPill } from "./install-pill";
+import { CharacterChip } from "./character-chip";
 
 interface Props {
   skill: SkillStats;
@@ -30,7 +31,10 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
   const tilt = tiltFor(skill.slug);
   const visual = skill.diptych_url ?? skill.cover_url;
   const headline = skill.tagline?.trim() || skill.name;
-  const showByline = Boolean(skill.tagline?.trim()) && skill.tagline?.trim() !== skill.name;
+  const hasCharacter = Boolean(skill.character_id && skill.character_slug);
+  const showNameByline =
+    Boolean(skill.tagline?.trim()) && skill.tagline?.trim() !== skill.name;
+  const showBylineRow = hasCharacter || showNameByline;
 
   return (
     <div
@@ -73,17 +77,36 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
           </div>
         </div>
 
-        <div className="px-3 py-2 border-t-[3px] border-[var(--color-ink)] bg-[var(--color-paper)]">
+        <div
+          className={cn(
+            "px-3 border-t-[3px] border-[var(--color-ink)] bg-[var(--color-paper)]",
+            showBylineRow ? "pt-2 pb-1" : "py-2",
+          )}
+        >
           <div className="display text-base leading-tight line-clamp-2">
             {headline}
           </div>
-          {showByline && (
-            <div className="tag-font text-[var(--color-grape)] text-xs mt-0.5 truncate">
+        </div>
+      </Link>
+
+      {/* Byline row lives outside the outer Link so a CharacterChip can be its
+          own anchor (nested <a> is invalid). When character_id is null we
+          render the plain skill name in the same slot — no layout reflow. */}
+      {showBylineRow && (
+        <div className="px-3 pb-2 bg-[var(--color-paper)]">
+          {hasCharacter ? (
+            <CharacterChip
+              slug={skill.character_slug as string}
+              name={skill.character_name ?? skill.name}
+              avatarUrl={skill.character_avatar_url}
+            />
+          ) : (
+            <div className="tag-font text-[var(--color-grape)] text-xs truncate">
               {skill.name}
             </div>
           )}
         </div>
-      </Link>
+      )}
 
       {/* Install pill sits OUTSIDE the Link to keep its click from navigating. */}
       <div className="px-3 pt-2 pb-2 border-t-2 border-[var(--color-ink)] bg-[var(--color-paper)]">
