@@ -151,14 +151,15 @@ export async function fetchSkillsByCharacter(
 }
 
 /**
- * All characters, ordered by created_at, for the /town map. Includes
- * avatar_url + building_url so tiles can render placeholders consistently.
+ * All characters for the /town map. Ordered by slug because created_at is not
+ * in the anon column grant (operational column). The town layout JSON drives
+ * visual placement, so the DB sort key is only for stable Map iteration.
  */
 export async function fetchCharactersForTown(): Promise<Character[]> {
   const { data, error } = await supabaseAnon()
     .from("characters")
     .select(CHARACTER_PUBLIC_COLUMNS)
-    .order("created_at", { ascending: true });
+    .order("slug", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Character[];
 }
