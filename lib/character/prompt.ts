@@ -9,6 +9,8 @@
  * triggers regen on the next cron run.
  */
 
+import { pick } from "./random";
+
 export const AVATAR_STYLE_VERSION = "v1-fisheye-character";
 
 export interface AvatarPromptInput {
@@ -63,18 +65,6 @@ const INFLUENCER_PROPS = [
   "a dog-eared paperback",
   "a framed polaroid on the wall",
 ];
-
-/** Deterministic stable index from a slug. */
-function slugHash(slug: string): number {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-function pick<T>(slug: string, salt: number, pool: readonly T[]): T {
-  const idx = (slugHash(slug) + salt) % pool.length;
-  return pool[idx];
-}
 
 function deriveWord(role: string | null | undefined, fallback: string): string {
   const raw = (role ?? fallback).trim();
