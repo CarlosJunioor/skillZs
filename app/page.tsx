@@ -1,7 +1,9 @@
 import { HeroCarousel } from "@/components/hero-carousel";
+import { JsonLd } from "@/components/json-ld";
 import { Manifesto } from "@/components/manifesto";
 import { SkillRow } from "@/components/skill-row";
 import { SortTabs } from "@/components/sort-tabs";
+import { collectionJsonLd, siteConfig } from "@/lib/seo";
 import {
   fetchByCategory,
   fetchHero,
@@ -61,9 +63,18 @@ export default async function HomePage({
   }
 
   const hasData = hero.length > 0 || trending.length > 0;
+  const featured = hero.length > 0 ? hero : trending.slice(0, 5);
 
   return (
     <div className="pt-2">
+      <JsonLd
+        data={collectionJsonLd({
+          path: "/",
+          name: siteConfig.title,
+          description: siteConfig.description,
+          skills: featured,
+        })}
+      />
       <HeroCarousel skills={hero} />
 
       {!hasData && (

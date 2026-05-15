@@ -1,4 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  runCoverGeneration: vi.fn(),
+}));
+
+vi.mock("../lib/covers/run", () => ({
+  runCoverGeneration: mocks.runCoverGeneration,
+}));
+
 import { GET } from "../app/api/cron/generate-covers/route";
 
 function request(url: string): Request {
@@ -8,6 +17,10 @@ function request(url: string): Request {
 }
 
 describe("generate-covers cron route", () => {
+  beforeEach(() => {
+    mocks.runCoverGeneration.mockReset();
+  });
+
   afterEach(() => {
     delete process.env.CRON_SECRET;
     delete process.env.COVER_CRON_SECRET;
@@ -19,6 +32,7 @@ describe("generate-covers cron route", () => {
 
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false, error: "unauthorized" });
+    expect(mocks.runCoverGeneration).not.toHaveBeenCalled();
   });
 
   it("rejects invalid limit before starting work", async () => {
@@ -27,6 +41,7 @@ describe("generate-covers cron route", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false, error: "invalid limit" });
+    expect(mocks.runCoverGeneration).not.toHaveBeenCalled();
   });
 
   it("rejects invalid quality before starting work", async () => {
@@ -57,5 +72,37 @@ describe("generate-covers cron route", () => {
     }));
     expect(specific.status).toBe(400);
     expect(await specific.json()).toEqual({ ok: false, error: "invalid limit" });
+  });
+
+  it("starts cover generation with validated options", async () => {
+    process.env.CRON_SECRET = "test-secret";
+    const stats = {
+      attempted: 2,
+      generated: 2,
+      failed: 0,
+      estimatedCostUsd: 0.2,
+      errors: [],
+    };
+    mocks.runCoverGeneration.mockResolvedValue(stats);
+
+    const res = await GET(request("https://example.test/api/cron/generate-covers?limit=500&quality=medium&order=first_seen"));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, stats });
+    expect(mocks.runCoverGeneration).toHaveBeenCalledWith({
+      limit: 100,
+      quality: "medium",
+      order: "first_seen",
+    });
+  });
+
+  it("returns sanitized errors when cover generation throws", async () => {
+    process.env.CRON_SECRET = "test-secret";
+    mocks.runCoverGeneration.mockRejectedValue(new Error("openai unavailable"));
+
+    const res = await GET(request("https://example.test/api/cron/generate-covers"));
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "openai unavailable" });
   });
 });

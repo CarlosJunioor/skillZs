@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/json-ld";
 import { SkillCard } from "@/components/skill-card";
 import { fetchBrowse, type SortKey } from "@/lib/stats";
 import { compactNumber } from "@/lib/format";
+import { buildPageMetadata, collectionJsonLd } from "@/lib/seo";
 
 export const revalidate = 120;
+
+const BROWSE_TITLE = "Browse Claude skills";
+const BROWSE_DESCRIPTION =
+  "Browse the full skillZs catalog of Claude skills by category, freshness, votes, usage, and GitHub stars.";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: BROWSE_TITLE,
+  description: BROWSE_DESCRIPTION,
+  path: "/browse",
+});
 
 const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: "hot", label: "hot" },
@@ -66,6 +79,14 @@ export default async function BrowsePage({
 
   return (
     <div className="pt-8">
+      <JsonLd
+        data={collectionJsonLd({
+          path: "/browse",
+          name: BROWSE_TITLE,
+          description: BROWSE_DESCRIPTION,
+          skills,
+        })}
+      />
       <header className="flex items-end justify-between flex-wrap gap-3 mb-6">
         <h1 className="display text-5xl md:text-7xl leading-none">
           <span className="drip">browse</span>

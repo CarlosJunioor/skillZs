@@ -9,6 +9,8 @@ import {
 import { parseSkill, slugify } from "./parse-skill";
 import { categorize } from "./categorize";
 import { supabaseService } from "../supabase/server";
+import { contentHash } from "../diptych/hash";
+import { attributeSkillToCharacter } from "../character/attribute";
 
 export interface IngestStats {
   reposScanned: number;
@@ -57,6 +59,25 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
             .slice(0, -1)
             .join("/")}`;
 
+          const newHash = contentHash(parsed.body);
+          // If upstream SKILL.md content changed for a row whose diptych was
+          // already 'done', requeue it. The covers cron and diptych cron drain
+          // 'pending' rows separately, so this only resets the diptych side.
+          const { data: prior } = await sb
+            .from("skills")
+            .select("content_hash, diptych_status")
+            .eq("slug", slug)
+            .maybeSingle();
+          const priorHash = (prior as { content_hash?: string | null } | null)?.content_hash ?? null;
+          const priorDiptychStatus =
+            (prior as { diptych_status?: string | null } | null)?.diptych_status ?? null;
+          const shouldRequeueDiptych =
+            priorHash !== null &&
+            priorHash !== newHash &&
+            priorDiptychStatus === "done";
+
+          const attribution = await attributeSkillToCharacter(sb, parsed.meta);
+
           const { error } = await sb.from("skills").upsert(
             {
               slug,
@@ -69,6 +90,11 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
               cover_url: ogImageUrl(seed.owner, seed.repo),
               github_stars: meta.stargazers_count,
               readme_md: parsed.body,
+              content_hash: newHash,
+              ...(attribution.character_id !== null
+                ? { character_id: attribution.character_id }
+                : {}),
+              ...(shouldRequeueDiptych ? { diptych_status: "pending" } : {}),
               last_seen: now,
             },
             { onConflict: "slug" },

@@ -9,6 +9,7 @@ export function hashIp(ip: string, salt: string): string {
 }
 
 export function getClientIp(headers: Headers): string {
+  // Only trust this header because production runs behind Vercel.
   return normalizeIp(headers.get(TRUSTED_PLATFORM_IP_HEADER)) ?? "0.0.0.0";
 }
 
