@@ -7,7 +7,7 @@ import type { TownTile } from "../lib/town/layout";
 const mocks = vi.hoisted(() => ({
   loadTownLayout: vi.fn<() => Promise<TownTile[]>>(),
   fetchCharacterBySlug: vi.fn<(slug: string) => Promise<Character | null>>(),
-  redirect: vi.fn((_path: string) => { throw new Error("NEXT_REDIRECT"); }),
+  redirect: vi.fn(() => { throw new Error("NEXT_REDIRECT"); }),
 }));
 
 vi.mock("next/link", () => ({
