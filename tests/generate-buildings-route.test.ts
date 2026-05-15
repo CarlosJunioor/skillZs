@@ -80,5 +80,6 @@ describe("generate-buildings cron route", () => {
     mocks.runBuildingGeneration.mockRejectedValue(new Error("openai unavailable"));
     const res = await GET(authRequest("https://example.test/api/cron/generate-buildings"));
     expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "openai unavailable" });
   });
 });
