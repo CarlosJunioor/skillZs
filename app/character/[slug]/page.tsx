@@ -5,6 +5,9 @@ import { SkillRow } from "@/components/skill-row";
 import { SkillCard } from "@/components/skill-card";
 import { fetchCharacterBySlug, fetchSkillsByCharacter } from "@/lib/stats";
 import { buildPageMetadata } from "@/lib/seo";
+import { Suspense } from "react";
+import { CharacterActivity } from "@/components/character-activity";
+import { ActivitySkeleton } from "@/components/activity-skeleton";
 
 export const revalidate = 120;
 
@@ -72,6 +75,10 @@ export default async function CharacterPage({
           </div>
         </noscript>
       )}
+
+      <Suspense fallback={<ActivitySkeleton />}>
+        <CharacterActivity characterId={character.id} />
+      </Suspense>
     </article>
   );
 }
