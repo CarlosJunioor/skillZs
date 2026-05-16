@@ -100,7 +100,7 @@ GitHub API is unauthed. Limit is 60 req/hr per egress IP, shared with anyone hit
 | `lib/stats.ts` | Extend with `fetchActivityForCharacter(characterId: string): Promise<ActivityRow[]>` → `select … where character_id = $1 and occurred_at > now() - interval '7 days' order by occurred_at desc limit 5`. Use the `anon` client (RLS allows read) |
 | `app/character/[slug]/page.tsx` | Insert `<Suspense fallback={<ActivitySkeleton/>}><CharacterActivity characterId={c.id} /></Suspense>` between the skills row and the footer |
 
-Time-ago format: bespoke `formatTimeAgo(date: Date): string` in `lib/format.ts` (or wherever the project already has formatters — confirm during execution). Output examples: `2h ago`, `3d ago`, `6d ago`. Always relative to now; no absolute dates.
+Time-ago format: `formatTimeAgo(date: Date): string` added to existing `lib/format.ts` (alongside `compactNumber`, `categoryEmoji`, `categoryLabel`). Output examples: `2h ago`, `3d ago`, `6d ago`. Always relative to now; no absolute dates.
 
 ### Data flow
 
@@ -143,7 +143,7 @@ Page request: /character/[slug]
 | Normalize returns null | Event silently dropped (it was filtered by design) |
 | Insert hits unique conflict on `github_event_id` | Silent (idempotent re-runs are the point) |
 | `fetchActivityForCharacter` returns 0 rows | Component renders empty state. Not an error |
-| Supabase fetch failure inside component | Suspense boundary catches; React error boundary at page level shows fallback for that section only (rest of page intact) |
+| Supabase fetch failure inside component | `fetchActivityForCharacter` wraps the query in try/catch and returns `[]` on failure; component then renders the empty state ("quiet week.") rather than throwing. Rest of page unaffected. A failure is logged but not surfaced to the visitor |
 
 ### Tests (vitest, flat `tests/` directory)
 
@@ -154,6 +154,7 @@ Page request: /character/[slug]
 | `tests/ingest-activity-route.test.ts` | Auth gates: `DIPTYCH_CRON_SECRET` 200, `CRON_SECRET` fallback 200, no bearer 401, wrong bearer 401, malformed header 401. Iterates all `gh_handle is not null` characters; returns aggregate counts |
 | `tests/character-activity.test.tsx` | Renders 5 items with correct title/URL/time-ago. Empty state renders "quiet week." in tag-font. Items render in `occurred_at desc` order. Outbound links have `target="_blank" rel="noreferrer"` |
 | `tests/character-page.test.tsx` | Existing test extended: Suspense slot for activity present with `<CharacterActivity/>` child |
+| `tests/format.test.ts` | Existing test extended: `formatTimeAgo` for seconds, minutes, hours, days. Pinned `now` for determinism |
 
 Coverage ratchet: `npm run quality` must pass. Bump via `npm run ratchet` if floor moves.
 
@@ -192,13 +193,15 @@ $0. No image generation, no LLM calls. Only GH egress + ~35 inserts/week to Supa
 - `app/api/cron/ingest-activity/route.ts`
 - `components/character-activity.tsx`
 - `components/activity-skeleton.tsx`
-- 5 new files in `tests/` (see Tests table)
+- 4 new test files in `tests/`: `github-events.test.ts`, `ingest-activity.test.ts`, `ingest-activity-route.test.ts`, `character-activity.test.tsx`
 
 **Modified:**
 - `lib/stats.ts` (add `fetchActivityForCharacter`, plus shared `ActivityRow` type if not added elsewhere)
+- `lib/format.ts` (add `formatTimeAgo`)
 - `app/character/[slug]/page.tsx` (insert activity Suspense block)
 - `vercel.json` (new cron entry `0 8 * * *`)
-- `lib/format.ts` if a formatter module exists; otherwise add `formatTimeAgo` inline in `components/character-activity.tsx` and lift to shared if reused
+- `tests/character-page.test.tsx` (extend with activity Suspense assertion)
+- `tests/format.test.ts` (extend with `formatTimeAgo` cases)
 
 ---
 
