@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAnon } from "./supabase/server";
-import type { Character, SkillStats } from "./types";
+import type { Character, SkillStats, ActivityRow } from "./types";
 
 const CHARACTER_PUBLIC_COLUMNS =
   "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url, building_url";
@@ -175,4 +175,49 @@ export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>>
     .order("slug", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Array<{ slug: string }>;
+}
+
+const ACTIVITY_PUBLIC_COLUMNS = [
+  "id",
+  "character_id",
+  "event_type",
+  "repo_full_name",
+  "ref",
+  "title",
+  "url",
+  "occurred_at",
+].join(", ");
+
+/**
+ * Returns the most recent N activity rows for a character within the display
+ * window. Wraps in try/catch and returns [] on failure so the page never
+ * throws over a transient ingest issue.
+ */
+export async function fetchActivityForCharacter(
+  characterId: string,
+  opts: { windowDays?: number; limit?: number } = {},
+): Promise<ActivityRow[]> {
+  const windowDays = opts.windowDays ?? 7;
+  const limit = opts.limit ?? 5;
+  const cutoff = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+
+  try {
+    const supabase = supabaseAnon();
+    const { data, error } = await supabase
+      .from("character_activities")
+      .select(ACTIVITY_PUBLIC_COLUMNS)
+      .eq("character_id", characterId)
+      .gt("occurred_at", cutoff)
+      .order("occurred_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(`[fetchActivityForCharacter] ${characterId}:`, error);
+      return [];
+    }
+    return (data ?? []) as unknown as ActivityRow[];
+  } catch (err) {
+    console.error(`[fetchActivityForCharacter] ${characterId} threw:`, err);
+    return [];
+  }
 }

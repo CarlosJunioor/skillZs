@@ -65,3 +65,14 @@ export interface CharacterStats extends Character {
   total_votes: number;
   last_skill_added_at: string | null;
 }
+
+export interface ActivityRow {
+  id: string;
+  character_id: string;
+  event_type: "PushEvent" | "ReleaseEvent";
+  repo_full_name: string;
+  ref: string | null;
+  title: string;
+  url: string;
+  occurred_at: string; // ISO string from postgres
+}
