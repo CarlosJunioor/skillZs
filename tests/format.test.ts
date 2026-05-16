@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { compactNumber, categoryEmoji, categoryLabel } from "../lib/format";
+import { formatTimeAgo } from "@/lib/format";
 
 describe("compactNumber", () => {
   it("returns plain number under 1000", () => {
@@ -50,5 +51,33 @@ describe("categoryLabel", () => {
   it("returns Other for null / undefined", () => {
     expect(categoryLabel(null)).toBe("Other");
     expect(categoryLabel(undefined)).toBe("Other");
+  });
+});
+
+describe("formatTimeAgo", () => {
+  const NOW = new Date("2026-05-16T12:00:00Z");
+
+  it("returns 'just now' under 1 minute", () => {
+    expect(formatTimeAgo(new Date("2026-05-16T11:59:31Z"), NOW)).toBe("just now");
+  });
+
+  it("returns Nm ago for minutes", () => {
+    expect(formatTimeAgo(new Date("2026-05-16T11:55:00Z"), NOW)).toBe("5m ago");
+    expect(formatTimeAgo(new Date("2026-05-16T11:01:00Z"), NOW)).toBe("59m ago");
+  });
+
+  it("returns Nh ago for hours", () => {
+    expect(formatTimeAgo(new Date("2026-05-16T10:00:00Z"), NOW)).toBe("2h ago");
+    expect(formatTimeAgo(new Date("2026-05-15T13:00:00Z"), NOW)).toBe("23h ago");
+  });
+
+  it("returns Nd ago for days", () => {
+    expect(formatTimeAgo(new Date("2026-05-15T12:00:00Z"), NOW)).toBe("1d ago");
+    expect(formatTimeAgo(new Date("2026-05-09T12:00:00Z"), NOW)).toBe("7d ago");
+  });
+
+  it("falls back to ISO date for older than 30 days", () => {
+    const d = new Date("2026-04-01T12:00:00Z");
+    expect(formatTimeAgo(d, NOW)).toBe("2026-04-01");
   });
 });
