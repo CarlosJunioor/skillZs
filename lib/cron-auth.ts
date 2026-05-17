@@ -22,9 +22,13 @@ export function isAuthorizedCronRequest(
   const primary = primarySecretEnv ? process.env[primarySecretEnv] : undefined;
   const cronSecret = process.env.CRON_SECRET;
 
-  if (primary && safeEqual(candidate, primary)) return true;
-  if (!primary && cronSecret && safeEqual(candidate, cronSecret)) return true;
-  if (options.allowCronSecretFallback && cronSecret && safeEqual(candidate, cronSecret)) return true;
+  if (primarySecretEnv) {
+    if (primary && safeEqual(candidate, primary)) return true;
+    if (options.allowCronSecretFallback && cronSecret && safeEqual(candidate, cronSecret)) return true;
+    return false;
+  }
+
+  if (cronSecret && safeEqual(candidate, cronSecret)) return true;
 
   return false;
 }
