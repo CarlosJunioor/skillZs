@@ -19,6 +19,7 @@ function request(url: string): Request {
 describe("generate-covers cron route", () => {
   beforeEach(() => {
     mocks.runCoverGeneration.mockReset();
+    process.env.COVER_CRON_SECRET = "test-secret";
   });
 
   afterEach(() => {
@@ -27,7 +28,6 @@ describe("generate-covers cron route", () => {
   });
 
   it("rejects unauthenticated requests", async () => {
-    process.env.CRON_SECRET = "test-secret";
     const res = await GET(new Request("https://example.test/api/cron/generate-covers"));
 
     expect(res.status).toBe(401);
@@ -36,7 +36,6 @@ describe("generate-covers cron route", () => {
   });
 
   it("rejects invalid limit before starting work", async () => {
-    process.env.CRON_SECRET = "test-secret";
     const res = await GET(request("https://example.test/api/cron/generate-covers?limit=-1"));
 
     expect(res.status).toBe(400);
@@ -45,7 +44,6 @@ describe("generate-covers cron route", () => {
   });
 
   it("rejects invalid quality before starting work", async () => {
-    process.env.CRON_SECRET = "test-secret";
     const res = await GET(request("https://example.test/api/cron/generate-covers?quality=ultra"));
 
     expect(res.status).toBe(400);
@@ -53,7 +51,6 @@ describe("generate-covers cron route", () => {
   });
 
   it("rejects invalid order before starting work", async () => {
-    process.env.CRON_SECRET = "test-secret";
     const res = await GET(request("https://example.test/api/cron/generate-covers?order=random"));
 
     expect(res.status).toBe(400);
@@ -74,8 +71,18 @@ describe("generate-covers cron route", () => {
     expect(await specific.json()).toEqual({ ok: false, error: "invalid limit" });
   });
 
-  it("starts cover generation with validated options", async () => {
+  it("rejects CRON_SECRET when COVER_CRON_SECRET is not configured", async () => {
+    delete process.env.COVER_CRON_SECRET;
     process.env.CRON_SECRET = "test-secret";
+
+    const res = await GET(request("https://example.test/api/cron/generate-covers?limit=-1"));
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ ok: false, error: "unauthorized" });
+    expect(mocks.runCoverGeneration).not.toHaveBeenCalled();
+  });
+
+  it("starts cover generation with validated options", async () => {
     const stats = {
       attempted: 2,
       generated: 2,
@@ -97,7 +104,6 @@ describe("generate-covers cron route", () => {
   });
 
   it("returns sanitized errors when cover generation throws", async () => {
-    process.env.CRON_SECRET = "test-secret";
     mocks.runCoverGeneration.mockRejectedValue(new Error("openai unavailable"));
 
     const res = await GET(request("https://example.test/api/cron/generate-covers"));
