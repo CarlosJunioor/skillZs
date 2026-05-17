@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   fetchSkillsByCharacter: vi.fn(),
   fetchActivityForCharacter: vi.fn(),
   notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }),
+  // Default: behave as if no local PNG panels exist — keeps the existing
+  // avatar-fallback assertions valid. Individual tests can override.
+  resolveCharacterHero: vi.fn((c: Character | null) => c?.avatar_url ?? null),
 }));
 
 vi.mock("next/link", () => ({
@@ -23,6 +26,10 @@ vi.mock("../lib/stats", () => ({
   fetchCharacterBySlug: mocks.fetchCharacterBySlug,
   fetchSkillsByCharacter: mocks.fetchSkillsByCharacter,
   fetchActivityForCharacter: mocks.fetchActivityForCharacter,
+}));
+
+vi.mock("../lib/character/art", () => ({
+  resolveCharacterHero: mocks.resolveCharacterHero,
 }));
 
 // SkillRow is a client component using useRef/useState — mock to a plain div

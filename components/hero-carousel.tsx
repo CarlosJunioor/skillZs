@@ -32,7 +32,7 @@ export function HeroCarousel({ skills, intervalMs = 7000 }: Props) {
           style={{ filter: "drop-shadow(8px 8px 0 #1A1A1A)" }}
         />
         <div className="relative z-10 text-left max-w-md px-10">
-          <div className="bubble text-sm mb-4">empty zine {"\u203C"}</div>
+          <div className="bubble text-sm mb-4">empty homepage {"\u203C"}</div>
           <div className="display text-6xl md:text-7xl leading-none mb-3">
             <span className="drip">catalog</span><br />warming up
           </div>

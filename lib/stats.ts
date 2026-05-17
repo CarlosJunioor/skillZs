@@ -23,15 +23,20 @@ export interface BrowseFilters {
   category?: string | null;
   limit?: number;
   offset?: number;
+  search?: string | null;
   /** when true, return only skills with an AI-generated cover (cover_status='done'). */
   coveredOnly?: boolean;
 }
+
+const SEARCH_COLUMNS = ["name", "description", "source_repo", "slug", "tagline", "category"];
+const MAX_SEARCH_CHARS = 80;
 
 /** Paginated browse query for the grid view. */
 export async function fetchBrowse(filters: BrowseFilters = {}): Promise<{ skills: SkillStats[]; total: number }> {
   const sort = filters.sort ?? "hot";
   const limit = filters.limit ?? 60;
   const offset = filters.offset ?? 0;
+  const searchTerms = searchTermsFor(filters.search);
 
   let q = supabaseAnon()
     .from("skill_stats")
@@ -49,9 +54,25 @@ export async function fetchBrowse(filters: BrowseFilters = {}): Promise<{ skills
     q = q.eq("cover_status", "done");
   }
 
+  for (const term of searchTerms) {
+    q = q.or(SEARCH_COLUMNS.map((column) => `${column}.ilike.*${term}*`).join(","));
+  }
+
   const { data, error, count } = await q;
   if (error) throw error;
   return { skills: (data ?? []) as SkillStats[], total: count ?? 0 };
+}
+
+export function normalizeSearchQuery(value: string | null | undefined): string {
+  return (value ?? "")
+    .slice(0, MAX_SEARCH_CHARS)
+    .replace(/[^a-z0-9@._/-]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function searchTermsFor(value: string | null | undefined): string[] {
+  return normalizeSearchQuery(value).split(" ").filter(Boolean).slice(0, 6);
 }
 
 export async function fetchTrending(limit = 12, sort: SortKey = "hot", coveredOnly = false): Promise<SkillStats[]> {

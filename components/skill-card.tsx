@@ -2,6 +2,7 @@ import Link from "next/link";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import type { SkillStats } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { resolveMarketplace } from "@/lib/plugin-config";
 import { InstallPill } from "./install-pill";
 import { CharacterChip } from "./character-chip";
 
@@ -107,7 +108,11 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
 
       {/* Install pill sits OUTSIDE the Link to keep its click from navigating. */}
       <div className="px-3 pt-2 pb-2 border-t-2 border-[var(--color-ink)] bg-[var(--color-paper)]">
-        <InstallPill slug={skill.slug} skillId={skill.id} />
+        <InstallPill
+          pluginName={skill.slug}
+          marketplace={resolveMarketplace(skill.slug, skill.source_repo)}
+          skillId={skill.id}
+        />
       </div>
 
       <Link

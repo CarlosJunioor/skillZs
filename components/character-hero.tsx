@@ -3,6 +3,9 @@ import type { Character } from "@/lib/types";
 
 interface Props {
   character: Character;
+  /** Best hero image for the character. Falls back to character.avatar_url
+   *  when omitted so existing callers keep working. */
+  heroUrl?: string | null;
 }
 
 /**
@@ -10,14 +13,15 @@ interface Props {
  * (center), social chips (right). Mirrors the comic-page composition used
  * on /skill/[slug] so the surface feels native.
  */
-export function CharacterHero({ character }: Props) {
+export function CharacterHero({ character, heroUrl }: Props) {
+  const hero = heroUrl ?? character.avatar_url;
   return (
     <section className="grid md:grid-cols-[260px_1fr] gap-6 mb-12">
       <div className="ink-frame relative w-full aspect-square overflow-hidden grain bg-[var(--color-mauve)]">
-        {character.avatar_url ? (
+        {hero ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={character.avatar_url}
+            src={hero}
             alt={character.name}
             className="w-full h-full object-cover"
           />
@@ -78,7 +82,7 @@ export function CharacterHero({ character }: Props) {
             </a>
           )}
           <Link href="/" className="text-[var(--color-rust)] hover:text-[var(--color-grape)] ml-auto">
-            ← back to zine
+            ← back to homepage
           </Link>
         </div>
       </div>

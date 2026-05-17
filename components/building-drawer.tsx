@@ -4,6 +4,9 @@ import type { Character } from "@/lib/types";
 
 interface Props {
   character: Character;
+  /** Best hero image for the character. Falls back to character.avatar_url
+   *  when omitted so existing callers keep working. */
+  heroUrl?: string | null;
 }
 
 /**
@@ -11,7 +14,8 @@ interface Props {
  * the ?building=slug search param on /. Content mirrors CharacterHero
  * (identity content only — no skills row; that lives on /character/[slug]).
  */
-export function BuildingDrawer({ character: c }: Props) {
+export function BuildingDrawer({ character: c, heroUrl }: Props) {
+  const hero = heroUrl ?? c.avatar_url;
   return (
     <aside className="fixed inset-x-0 bottom-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[420px] z-40 bg-[var(--color-paper)] border-t-[3px] lg:border-l-[3px] lg:border-t-0 border-[var(--color-ink)] p-6 overflow-y-auto">
       <div className="flex items-start justify-between mb-4">
@@ -24,9 +28,9 @@ export function BuildingDrawer({ character: c }: Props) {
       </div>
 
       <div className="ink-frame relative w-full aspect-square overflow-hidden grain bg-[var(--color-mauve)] mb-5">
-        {c.avatar_url ? (
+        {hero ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={c.avatar_url} alt={c.name} className="w-full h-full object-cover" />
+          <img src={hero} alt={c.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="display text-6xl text-[var(--color-paper)]">?!</span>

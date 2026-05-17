@@ -7,6 +7,8 @@ import { JsonLd } from "@/components/json-ld";
 import { VoteButton } from "@/components/vote-button";
 import { SkillRow } from "@/components/skill-row";
 import { InstallPill } from "@/components/install-pill";
+import { SkillContents } from "@/components/skill-contents";
+import { getPluginConfig, resolveMarketplace } from "@/lib/plugin-config";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import {
   breadcrumbJsonLd,
@@ -67,6 +69,8 @@ export default async function SkillPage({
   const relatedFiltered = related.filter((s) => s.id !== skill.id);
   const categoryPath = categoryRoute(skill.category);
   const categoryCrumb = categoryTitle(skill.category);
+  const pluginConfig = getPluginConfig(skill.slug);
+  const marketplace = resolveMarketplace(skill.slug, skill.source_repo);
 
   return (
     <article className="pt-6">
@@ -81,7 +85,7 @@ export default async function SkillPage({
         ]}
       />
       <Link href="/" className="tag-font text-[var(--color-grape)] inline-block mb-4 hover:underline">
-        ← back to zine
+        ← back to homepage
       </Link>
 
       {/* Comic page composition */}
@@ -128,7 +132,11 @@ export default async function SkillPage({
           </div>
 
           <div className="mt-8 space-y-4">
-            <InstallPill slug={skill.slug} skillId={skill.id} />
+            <InstallPill
+              pluginName={skill.slug}
+              marketplace={marketplace}
+              skillId={skill.id}
+            />
             <div className="flex flex-wrap gap-2">
               <VoteButton skillId={skill.id} initialCount={skill.vote_count} variant="vote" />
               <VoteButton skillId={skill.id} initialCount={skill.use_count} variant="use" />
@@ -150,6 +158,10 @@ export default async function SkillPage({
           </div>
         </div>
       </div>
+
+      {pluginConfig && (
+        <SkillContents pluginSlug={skill.slug} subSkills={pluginConfig.subSkills} />
+      )}
 
       {/* README */}
       {readme && (

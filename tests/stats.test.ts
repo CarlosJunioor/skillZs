@@ -13,6 +13,7 @@ type QueryCall =
   | { method: "range"; from: number; to: number }
   | { method: "eq"; column: string; value: unknown }
   | { method: "is"; column: string; value: unknown }
+  | { method: "or"; filters: string }
   | { method: "limit"; count: number }
   | { method: "maybeSingle" };
 
@@ -32,6 +33,7 @@ import {
   fetchSitemapSkills,
   fetchSkillBySlug,
   fetchTrending,
+  normalizeSearchQuery,
 } from "../lib/stats";
 
 function createClient(result: QueryResult) {
@@ -61,6 +63,10 @@ function createClient(result: QueryResult) {
     },
     is(column: string, value: unknown) {
       calls.push({ method: "is", column, value });
+      return query;
+    },
+    or(filters: string) {
+      calls.push({ method: "or", filters });
       return query;
     },
     limit(count: number) {
@@ -102,6 +108,7 @@ describe("stats queries", () => {
       sort: "votes",
       category: "coding",
       coveredOnly: true,
+      search: "React agent",
       limit: 5,
       offset: 10,
     });
@@ -114,7 +121,30 @@ describe("stats queries", () => {
       { method: "range", from: 10, to: 14 },
       { method: "eq", column: "category", value: "coding" },
       { method: "eq", column: "cover_status", value: "done" },
+      { method: "or", filters: "name.ilike.*React*,description.ilike.*React*,source_repo.ilike.*React*,slug.ilike.*React*,tagline.ilike.*React*,category.ilike.*React*" },
+      { method: "or", filters: "name.ilike.*agent*,description.ilike.*agent*,source_repo.ilike.*agent*,slug.ilike.*agent*,tagline.ilike.*agent*,category.ilike.*agent*" },
     ]);
+  });
+
+  it("normalizes browse search text before building filters", async () => {
+    const { client, calls } = createClient({ data: [], count: 0 });
+    supabaseMock.client = client;
+
+    await expect(fetchBrowse({ search: "  agent, markdown%%%  " })).resolves.toEqual({ skills: [], total: 0 });
+
+    expect(calls).toContainEqual({
+      method: "or",
+      filters: "name.ilike.*agent*,description.ilike.*agent*,source_repo.ilike.*agent*,slug.ilike.*agent*,tagline.ilike.*agent*,category.ilike.*agent*",
+    });
+    expect(calls).toContainEqual({
+      method: "or",
+      filters: "name.ilike.*markdown*,description.ilike.*markdown*,source_repo.ilike.*markdown*,slug.ilike.*markdown*,tagline.ilike.*markdown*,category.ilike.*markdown*",
+    });
+  });
+
+  it("exposes normalized search text for URL forms", () => {
+    expect(normalizeSearchQuery("  React,agents%%%  ")).toBe("React agents");
+    expect(normalizeSearchQuery("x".repeat(100))).toHaveLength(80);
   });
 
   it("fetchBrowse maps the other category to null and defaults empty results", async () => {

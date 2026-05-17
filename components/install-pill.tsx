@@ -4,7 +4,12 @@ import { useState } from "react";
 import { showToast } from "./ui/toast";
 
 interface Props {
-  slug: string;
+  /** Plugin name as registered in the Claude Code marketplace — typically the
+   *  skill slug. Appears before the @ in the slash command. */
+  pluginName: string;
+  /** Marketplace identifier the plugin lives in — usually `<owner>/<repo>` on
+   *  GitHub. Appears after the @ in the slash command. */
+  marketplace: string;
   /** Hide if you only want the visual contract (no copy interaction). */
   disabled?: boolean;
   /** Optional skillId for use-counter ping. Omit to skip telemetry. */
@@ -12,13 +17,16 @@ interface Props {
 }
 
 /**
- * Click-to-copy install pill. The card it lives in is wrapped in <Link>, so we
- * call stopPropagation+preventDefault to keep the click from triggering page
- * navigation. The actual install happens in the user's terminal after they
- * paste the string and the `skillzs` CLI does runtime detection.
+ * Click-to-copy CTA for installing a Claude Code skill. Renders the canonical
+ * `/plugin install <name>@<marketplace>` slash command — what the user types
+ * into Claude Code itself, not into a shell. Stamp-style: bold "GET THIS SKILL"
+ * headline above a monospace preview of the slash command, so the action and
+ * the command are both legible at a glance. The card it lives in is wrapped in
+ * <Link>, so we stop propagation + prevent default on click to keep the copy
+ * from triggering page navigation.
  */
-export function InstallPill({ slug, disabled, skillId }: Props) {
-  const cmd = `npx github:CarlosJunioor/skillzs-cli install ${slug}`;
+export function InstallPill({ pluginName, marketplace, disabled, skillId }: Props) {
+  const cmd = `/plugin install ${pluginName}@${marketplace}`;
   const [copied, setCopied] = useState(false);
 
   async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
@@ -29,7 +37,7 @@ export function InstallPill({ slug, disabled, skillId }: Props) {
     try {
       await navigator.clipboard.writeText(cmd);
       setCopied(true);
-      showToast("Copied! Paste in your terminal.");
+      showToast("Copied! Paste into Claude Code.");
       window.setTimeout(() => setCopied(false), 1_400);
     } catch {
       showToast("Couldn't copy. Long-press to copy manually.");
@@ -54,28 +62,27 @@ export function InstallPill({ slug, disabled, skillId }: Props) {
       disabled={disabled}
       aria-label={`Copy install command: ${cmd}`}
       title={cmd}
-      className="install-pill"
+      data-copied={copied || undefined}
+      className="install-pill group/install relative w-full text-left ink-frame block px-3 py-2 transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.4rem",
-        width: "100%",
-        padding: "0.35rem 0.55rem",
-        fontFamily: "var(--font-body, monospace)",
-        fontSize: "0.72rem",
         background: copied ? "var(--color-olive)" : "var(--color-ink)",
         color: copied ? "var(--color-ink)" : "var(--color-paper)",
-        border: "2px solid var(--color-ink)",
-        boxShadow: "2px 2px 0 var(--shadow-color)",
-        cursor: disabled ? "not-allowed" : "copy",
-        textAlign: "left",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
       }}
     >
-      <span aria-hidden style={{ flex: "0 0 auto" }}>{copied ? "✓" : "⎘"}</span>
-      <code style={{ flex: "1 1 auto", overflow: "hidden", textOverflow: "ellipsis" }}>{cmd}</code>
+      <span className="flex items-center justify-between gap-2 leading-none">
+        <span className="display text-sm tracking-wide">
+          {copied ? "COPIED ✓" : "GET THIS SKILL"}
+        </span>
+        <span
+          aria-hidden
+          className="tag-font text-[10px] uppercase opacity-70 group-hover/install:opacity-100"
+        >
+          {copied ? "in clipboard" : "↓ copy"}
+        </span>
+      </span>
+      <code className="mt-1 block type-font text-[11px] leading-tight truncate opacity-80">
+        {cmd}
+      </code>
     </button>
   );
 }

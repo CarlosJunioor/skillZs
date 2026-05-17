@@ -1,30 +1,43 @@
 // lib/town/layout.ts
 import "server-only";
 import layoutJson from "@/design/town-layout.json";
+import { loadCharacterArt } from "@/lib/character/art";
 import { fetchCharactersForTown } from "@/lib/stats";
 import type { Character } from "@/lib/types";
 
-export interface LayoutEntry {
-  slug: string;
+/** Hotspot box on the Aquarius map image. All values are 0..1 fractions of
+ *  the rendered map width/height — independent of the underlying PNG size. */
+export interface Hotspot {
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
+export interface LayoutEntry {
+  slug: string;
+  /** Human-readable building label as drawn on the map (e.g. "TGH BUILDING"). */
+  building: string;
+  hotspot: Hotspot;
+}
+
 export interface TownTile extends LayoutEntry {
   character: Character;
+  /** Public URLs of user-drawn art panels for this character, in display order.
+   *  Empty when no panels have been added under public/characters/<slug>/N.png. */
+  artUrls: string[];
 }
 
 /**
  * Read design/town-layout.json + the characters table and produce a merged
  * tile list. STRICT drift policy: throws on any mismatch between layout and
- * DB. See design/sub-project-c-town.md "Drift policy" for rationale.
+ * DB. Hotspot coords are validated (0..1) but overlaps are allowed because
+ * the map is hand-drawn isometric — illustrated buildings naturally bleed.
  */
 export async function loadTownLayout(): Promise<TownTile[]> {
-  const entries = (layoutJson as unknown as LayoutEntry[]);
+  const entries = layoutJson as unknown as LayoutEntry[];
   assertNoDuplicates(entries);
-  assertNoOverlaps(entries);
+  assertValidHotspots(entries);
 
   const characters = await fetchCharactersForTown();
   const charBySlug = new Map(characters.map((c) => [c.slug, c]));
@@ -44,6 +57,7 @@ export async function loadTownLayout(): Promise<TownTile[]> {
   return entries.map((e) => ({
     ...e,
     character: charBySlug.get(e.slug) as Character,
+    artUrls: loadCharacterArt(e.slug),
   }));
 }
 
@@ -57,19 +71,14 @@ function assertNoDuplicates(entries: LayoutEntry[]): void {
   }
 }
 
-function assertNoOverlaps(entries: LayoutEntry[]): void {
-  const occupied = new Map<string, string>(); // "x,y" -> slug
+function assertValidHotspots(entries: LayoutEntry[]): void {
   for (const e of entries) {
-    for (let dx = 0; dx < e.w; dx++) {
-      for (let dy = 0; dy < e.h; dy++) {
-        const key = `${e.x + dx},${e.y + dy}`;
-        if (occupied.has(key)) {
-          throw new Error(
-            `town layout: overlap at (${e.x + dx},${e.y + dy}) between "${occupied.get(key)}" and "${e.slug}"`,
-          );
-        }
-        occupied.set(key, e.slug);
-      }
+    const { x, y, w, h } = e.hotspot;
+    const inRange = (v: number) => v >= 0 && v <= 1;
+    if (![x, y, w, h].every(inRange) || x + w > 1.0001 || y + h > 1.0001) {
+      throw new Error(
+        `town layout: hotspot for "${e.slug}" out of bounds — must be 0..1 fractions inside the map`,
+      );
     }
   }
 }

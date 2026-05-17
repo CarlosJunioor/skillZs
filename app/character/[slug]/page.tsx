@@ -4,6 +4,7 @@ import { CharacterHero } from "@/components/character-hero";
 import { SkillRow } from "@/components/skill-row";
 import { SkillCard } from "@/components/skill-card";
 import { fetchCharacterBySlug, fetchSkillsByCharacter } from "@/lib/stats";
+import { resolveCharacterHero } from "@/lib/character/art";
 import { buildPageMetadata } from "@/lib/seo";
 import { Suspense } from "react";
 import { CharacterActivity } from "@/components/character-activity";
@@ -26,11 +27,12 @@ export async function generateMetadata({
       noIndex: true,
     });
   }
+  const hero = resolveCharacterHero(character);
   return buildPageMetadata({
     title: `${character.name} on skillZs`,
     description: character.bio ?? character.role ?? `Skills shipped by ${character.name}.`,
     path: `/character/${character.slug}`,
-    ...(character.avatar_url ? { image: character.avatar_url } : {}),
+    ...(hero ? { image: hero } : {}),
     imageAlt: character.name,
     type: "article",
   });
@@ -49,7 +51,7 @@ export default async function CharacterPage({
 
   return (
     <article className="pt-6">
-      <CharacterHero character={character} />
+      <CharacterHero character={character} heroUrl={resolveCharacterHero(character)} />
 
       {skills.length > 0 ? (
         <SkillRow title={`shipped by ${character.name.toLowerCase()}`} skills={skills} />

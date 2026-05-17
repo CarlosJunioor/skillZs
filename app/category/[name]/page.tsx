@@ -77,7 +77,7 @@ export default async function CategoryPage({
         ]}
       />
       <Link href="/" className="tag-font text-[var(--color-grape)] inline-block mb-4 hover:underline">
-        ← back to zine
+        ← back to homepage
       </Link>
       <h1 className="display text-6xl md:text-8xl leading-none mb-8">
         <span className="drip">{categoryLabel(slug).toLowerCase()}</span>

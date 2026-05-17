@@ -8,6 +8,7 @@ import { BuildingDrawer } from "@/components/building-drawer";
 import { DrawerSkeleton } from "@/components/drawer-skeleton";
 import { JsonLd } from "@/components/json-ld";
 import { loadTownLayout } from "@/lib/town/layout";
+import { resolveCharacterHero } from "@/lib/character/art";
 import { fetchCharacterBySlug } from "@/lib/stats";
 import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 
@@ -22,11 +23,12 @@ export async function generateMetadata({
   if (sp.building) {
     const character = await fetchCharacterBySlug(sp.building);
     if (character) {
+      const hero = resolveCharacterHero(character);
       return buildPageMetadata({
         title: `${character.name} on skillZs`,
         description: character.bio ?? character.role ?? `Skills shipped by ${character.name}.`,
         path: `/character/${character.slug}`,
-        ...(character.avatar_url ? { image: character.avatar_url } : {}),
+        ...(hero ? { image: hero } : {}),
         imageAlt: character.name,
         type: "article",
       });
@@ -91,7 +93,10 @@ export default async function TownPage({ searchParams }: PageProps) {
 
       {drawerCharacter && (
         <Suspense fallback={<DrawerSkeleton />}>
-          <BuildingDrawer character={drawerCharacter} />
+          <BuildingDrawer
+            character={drawerCharacter}
+            heroUrl={resolveCharacterHero(drawerCharacter)}
+          />
         </Suspense>
       )}
     </div>

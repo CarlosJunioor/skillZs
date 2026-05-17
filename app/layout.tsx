@@ -82,7 +82,7 @@ export const metadata: Metadata = {
 };
 
 const NAV = [
-  { href: "/zine", label: "zine" },
+  { href: "/zine", label: "homepage" },
   { href: "/browse", label: "browse all" },
   { href: "/category/coding", label: "coding" },
   { href: "/category/creative", label: "creative" },
@@ -163,7 +163,7 @@ export default async function RootLayout({
             <div>
               <SkillZsLogo size="sm" />
               <p className="type-font text-sm mt-3 max-w-xs leading-relaxed">
-                a fanzine for Claude skills. ingested every Sunday. shoutout obra/superpowers and the rest.
+                a homepage for Claude skills. ingested every Sunday. shoutout obra/superpowers and the rest.
               </p>
             </div>
             <div>
