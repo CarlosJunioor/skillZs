@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { normalizeEvent, type RawGitHubEvent } from "@/lib/character/github-events";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { fetchPublicEvents, normalizeEvent, type RawGitHubEvent } from "@/lib/character/github-events";
 
 const CHAR_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -112,5 +112,90 @@ describe("normalizeEvent", () => {
       CHAR_ID,
     );
     expect(row).toBeNull();
+  });
+});
+
+describe("fetchPublicEvents", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    delete process.env.GITHUB_TOKEN;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns parsed events on 200", async () => {
+    const events = [rawRelease(), rawPush()];
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => events,
+    });
+    const result = await fetchPublicEvents("ghuser");
+    expect(result).toEqual(events);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://api.github.com/users/ghuser/events/public?per_page=30",
+    );
+    expect((init as RequestInit).headers).toMatchObject({
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    });
+    expect((init as RequestInit).headers).not.toHaveProperty("Authorization");
+  });
+
+  it("returns [] when GitHub responds 404 (handle deleted/renamed)", async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({}),
+    });
+    const result = await fetchPublicEvents("ghost");
+    expect(result).toEqual([]);
+  });
+
+  it("throws on non-404 non-ok status", async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: async () => ({}),
+    });
+    await expect(fetchPublicEvents("ghuser")).rejects.toThrow(
+      /GitHub events for ghuser -> 500 Internal Server Error/,
+    );
+  });
+
+  it("includes Authorization header when GITHUB_TOKEN is set", async () => {
+    process.env.GITHUB_TOKEN = "pat-test-token";
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    });
+    await fetchPublicEvents("ghuser");
+    const [, init] = fetchMock.mock.calls[0];
+    expect((init as RequestInit).headers).toMatchObject({
+      Authorization: "Bearer pat-test-token",
+    });
+  });
+
+  it("URL-encodes the handle to defend against odd inputs", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    });
+    await fetchPublicEvents("weird handle/slash");
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://api.github.com/users/weird%20handle%2Fslash/events/public?per_page=30",
+    );
   });
 });

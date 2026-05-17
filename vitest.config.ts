@@ -14,10 +14,10 @@ export default defineConfig({
         "lib/types.ts",
       ],
       thresholds: {
-        lines: 86.5,
-        functions: 79.5,
-        branches: 76.7,
-        statements: 83.9,
+        lines: 87.21,
+        functions: 80.95,
+        branches: 77.54,
+        statements: 84.65,
         "app/api/vote/route.ts": {
           lines: 62.5,
           functions: 100,
@@ -40,7 +40,7 @@ export default defineConfig({
           lines: 96.42,
           functions: 75,
           branches: 95,
-          statements: 93.5,
+          statements: 93.54,
         },
         "lib/csp.ts": {
           lines: 100,
@@ -58,7 +58,7 @@ export default defineConfig({
           lines: 100,
           functions: 100,
           branches: 66.66,
-          statements: 84.2,
+          statements: 84.21,
         },
         "lib/ip-hash.ts": {
           lines: 100,
@@ -68,9 +68,9 @@ export default defineConfig({
         },
         "lib/request-security.ts": {
           lines: 95.34,
-          functions: 83.3,
+          functions: 83.33,
           branches: 79.31,
-          statements: 86.2,
+          statements: 86.27,
         },
       },
     },
