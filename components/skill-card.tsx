@@ -65,14 +65,11 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
             </span>
             <div className="flex flex-col items-end gap-1">
               {isNew && (
-                <span
-                  className="stamp"
-                  style={{ borderColor: "var(--color-grape)", color: "var(--color-grape)" }}
-                >
+                <span className="stamp skill-card-stamp skill-card-stamp--new">
                   NEW
                 </span>
               )}
-              {isHot && <span className="stamp">HOT</span>}
+              {isHot && <span className="stamp skill-card-stamp skill-card-stamp--hot">HOT</span>}
             </div>
           </div>
         </div>

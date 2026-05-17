@@ -146,6 +146,28 @@ h1, h2, h3, h4, .display { font-family: var(--font-display); letter-spacing: -0.
   border-radius: 4px;
 }
 
+.skill-card-stamp {
+  min-width: 42px;
+  padding: 5px 9px 6px;
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+  line-height: 1;
+  box-shadow: 2px 2px 0 var(--color-ink);
+  text-shadow: none;
+}
+
+.skill-card-stamp--new {
+  background: var(--color-olive);
+  color: #1A1A1A;
+  transform: rotate(6deg);
+}
+
+.skill-card-stamp--hot {
+  background: var(--color-blood);
+  color: #E8DFC9;
+  transform: rotate(-6deg);
+}
+
 /* Speech bubble */
 .bubble {
   position: relative;
@@ -226,6 +248,240 @@ h1, h2, h3, h4, .display { font-family: var(--font-display); letter-spacing: -0.
   10%  { transform: translateY(0)    scaleY(0.95); opacity: 1.0; }
   70%  { transform: translateY(0)    scaleY(1);    opacity: 1.0; }
   100% { transform: translateY(8px)  scaleY(1.6);  opacity: 0.0; }
+}
+
+/* Header wordmark: photocopied ink slips out of register, then snaps back. */
+.skillzs-logo {
+  --skillzs-logo-height: 88px;
+  --skillzs-logo-width: 209px;
+  position: relative;
+  display: block;
+  width: var(--skillzs-logo-width);
+  height: var(--skillzs-logo-height);
+  flex: 0 0 auto;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.skillzs-logo__image {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: 50% 62%;
+  animation: skillzs-print-body 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__ghost,
+.skillzs-logo__slice,
+.skillzs-logo__shutter,
+.skillzs-logo__register {
+  position: absolute;
+  pointer-events: none;
+}
+
+.skillzs-logo__ghost {
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: url("/skillzs-wordmark.png");
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url("/skillzs-wordmark.png");
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
+
+.skillzs-logo__ghost--grape {
+  background: var(--color-grape);
+  animation: skillzs-print-grape 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__ghost--olive {
+  z-index: 2;
+  background: var(--color-olive);
+  animation: skillzs-print-olive 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__slice {
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  background-image: url("/skillzs-wordmark.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  filter: saturate(1.15) contrast(1.25);
+  mix-blend-mode: multiply;
+}
+
+.skillzs-logo__slice--high {
+  animation: skillzs-print-slice-high 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__slice--low {
+  animation: skillzs-print-slice-low 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__shutter {
+  top: -16%;
+  bottom: -16%;
+  left: -42%;
+  z-index: 5;
+  width: 34%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(232, 223, 201, 0.35) 18%, rgba(232, 223, 201, 0.9) 50%, rgba(92, 61, 107, 0.28) 60%, transparent 100%);
+  mix-blend-mode: screen;
+  transform: skewX(-16deg);
+  animation: skillzs-print-shutter 7.4s cubic-bezier(.2,.7,.3,1) infinite;
+}
+
+.skillzs-logo__register {
+  z-index: 6;
+  width: 22px;
+  height: 3px;
+  opacity: 0;
+  background: var(--color-ink);
+}
+
+.skillzs-logo__register--top {
+  top: 18%;
+  left: -8px;
+  box-shadow: 0 6px 0 var(--color-blood);
+  transform: rotate(-10deg);
+  animation: skillzs-register-top 7.4s steps(1, end) infinite;
+}
+
+.skillzs-logo__register--bottom {
+  right: 5%;
+  bottom: 8%;
+  background: var(--color-olive-dark);
+  box-shadow: 8px -5px 0 -1px var(--color-grape);
+  transform: rotate(8deg);
+  animation: skillzs-register-bottom 7.4s steps(1, end) infinite;
+}
+
+.group:hover .skillzs-logo__image,
+.group:focus-visible .skillzs-logo__image {
+  animation: skillzs-print-hover 720ms steps(1, end) both;
+}
+
+.group:hover .skillzs-logo__ghost--grape,
+.group:focus-visible .skillzs-logo__ghost--grape {
+  animation: skillzs-print-hover-grape 720ms steps(1, end) both;
+}
+
+.group:hover .skillzs-logo__ghost--olive,
+.group:focus-visible .skillzs-logo__ghost--olive {
+  animation: skillzs-print-hover-olive 720ms steps(1, end) both;
+}
+
+.group:hover .skillzs-logo__slice--high,
+.group:focus-visible .skillzs-logo__slice--high {
+  animation: skillzs-print-hover-slice 720ms steps(1, end) both;
+}
+
+@keyframes skillzs-print-body {
+  0%, 3%, 9%, 39%, 48%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
+  4%  { transform: translate(-1px, 1px) rotate(-0.18deg); filter: contrast(1.12) saturate(1.08); }
+  5%  { transform: translate(1px, -1px) rotate(0.16deg); filter: contrast(1.2) saturate(1.18); }
+  42% { transform: translate(0.75px, 0) rotate(0.08deg); filter: contrast(1.08); }
+  44% { transform: translate(-0.75px, 0.5px) rotate(-0.08deg); filter: contrast(1.12); }
+}
+
+@keyframes skillzs-print-grape {
+  0%, 3%, 8%, 40%, 49%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0); }
+  4%  { opacity: 0.66; transform: translate(-6px, 2px); clip-path: polygon(0 0, 100% 0, 100% 38%, 0 44%); }
+  5%  { opacity: 0.42; transform: translate(4px, -1px); clip-path: polygon(0 30%, 100% 24%, 100% 70%, 0 76%); }
+  43% { opacity: 0.3; transform: translate(-3px, 1px); clip-path: polygon(0 12%, 100% 17%, 100% 57%, 0 49%); }
+  45% { opacity: 0.18; transform: translate(2px, 0); clip-path: polygon(0 56%, 100% 50%, 100% 92%, 0 88%); }
+}
+
+@keyframes skillzs-print-olive {
+  0%, 3%, 8%, 40%, 49%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0); }
+  4%  { opacity: 0.52; transform: translate(5px, -2px); clip-path: polygon(0 42%, 100% 34%, 100% 100%, 0 100%); }
+  5%  { opacity: 0.28; transform: translate(-3px, 1px); clip-path: polygon(0 0, 100% 0, 100% 28%, 0 34%); }
+  44% { opacity: 0.24; transform: translate(3px, -1px); clip-path: polygon(0 20%, 100% 16%, 100% 72%, 0 68%); }
+}
+
+@keyframes skillzs-print-slice-high {
+  0%, 3.8%, 5.6%, 34%, 36%, 100% { opacity: 0; transform: translateX(0); clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+  4.3% { opacity: 0.95; transform: translateX(8px); clip-path: polygon(0 19%, 100% 14%, 100% 31%, 0 37%); }
+  35%  { opacity: 0.7; transform: translateX(-5px); clip-path: polygon(0 8%, 100% 12%, 100% 24%, 0 19%); }
+}
+
+@keyframes skillzs-print-slice-low {
+  0%, 4.4%, 6.2%, 42%, 46%, 100% { opacity: 0; transform: translateX(0); clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%); }
+  5%  { opacity: 0.82; transform: translateX(-7px); clip-path: polygon(0 59%, 100% 52%, 100% 73%, 0 78%); }
+  44% { opacity: 0.64; transform: translateX(6px); clip-path: polygon(0 70%, 100% 66%, 100% 92%, 0 88%); }
+}
+
+@keyframes skillzs-print-shutter {
+  0%, 3.8%, 7.2%, 41%, 45%, 100% { opacity: 0; transform: translateX(0) skewX(-16deg); }
+  4.4% { opacity: 0.72; transform: translateX(260%) skewX(-16deg); }
+  5.2% { opacity: 0; transform: translateX(390%) skewX(-16deg); }
+  43%  { opacity: 0.5; transform: translateX(230%) skewX(-16deg); }
+}
+
+@keyframes skillzs-register-top {
+  0%, 3.8%, 5.8%, 100% { opacity: 0; transform: translate(0, 0) rotate(-10deg); }
+  4.3% { opacity: 0.9; transform: translate(-2px, 0) rotate(-10deg); }
+  5%   { opacity: 0.7; transform: translate(6px, 1px) rotate(-10deg); }
+}
+
+@keyframes skillzs-register-bottom {
+  0%, 42%, 45.5%, 100% { opacity: 0; transform: translate(0, 0) rotate(8deg); }
+  43.4% { opacity: 0.85; transform: translate(3px, -1px) rotate(8deg); }
+  44.3% { opacity: 0.55; transform: translate(-4px, 1px) rotate(8deg); }
+}
+
+@keyframes skillzs-print-hover {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
+  20% { transform: translate(-2px, 1px) rotate(-0.45deg); filter: contrast(1.28) saturate(1.35); }
+  42% { transform: translate(2px, -1px) rotate(0.32deg); filter: contrast(1.18) saturate(1.2); }
+  66% { transform: translate(-1px, 0) rotate(-0.12deg); filter: contrast(1.08); }
+}
+
+@keyframes skillzs-print-hover-grape {
+  0%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0); }
+  22% { opacity: 0.72; transform: translate(-7px, 2px); clip-path: polygon(0 0, 100% 0, 100% 42%, 0 48%); }
+  44% { opacity: 0.48; transform: translate(4px, -1px); clip-path: polygon(0 36%, 100% 29%, 100% 74%, 0 78%); }
+}
+
+@keyframes skillzs-print-hover-olive {
+  0%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0); }
+  22% { opacity: 0.58; transform: translate(5px, -2px); clip-path: polygon(0 46%, 100% 37%, 100% 100%, 0 100%); }
+  44% { opacity: 0.34; transform: translate(-3px, 1px); clip-path: polygon(0 0, 100% 0, 100% 29%, 0 36%); }
+}
+
+@keyframes skillzs-print-hover-slice {
+  0%, 100% { opacity: 0; transform: translateX(0); clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+  35% { opacity: 0.92; transform: translateX(8px); clip-path: polygon(0 18%, 100% 12%, 100% 33%, 0 39%); }
+  62% { opacity: 0.58; transform: translateX(-6px); clip-path: polygon(0 66%, 100% 58%, 100% 78%, 0 84%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skillzs-logo__image,
+  .skillzs-logo__ghost,
+  .skillzs-logo__slice,
+  .skillzs-logo__shutter,
+  .skillzs-logo__register {
+    animation: none !important;
+  }
+
+  .skillzs-logo__ghost,
+  .skillzs-logo__slice,
+  .skillzs-logo__shutter,
+  .skillzs-logo__register {
+    display: none;
+  }
 }
 
 /* Markdown styling for skill detail page README. */
