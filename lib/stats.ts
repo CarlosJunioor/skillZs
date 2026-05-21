@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAnon } from "./supabase/server";
-import type { Character, SkillStats } from "./types";
+import type { Character, SkillStats, ActivityRow } from "./types";
 
 const CHARACTER_PUBLIC_COLUMNS =
   "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url, building_url";
@@ -23,15 +23,20 @@ export interface BrowseFilters {
   category?: string | null;
   limit?: number;
   offset?: number;
+  search?: string | null;
   /** when true, return only skills with an AI-generated cover (cover_status='done'). */
   coveredOnly?: boolean;
 }
+
+const SEARCH_COLUMNS = ["name", "description", "source_repo", "slug", "tagline", "category"];
+const MAX_SEARCH_CHARS = 80;
 
 /** Paginated browse query for the grid view. */
 export async function fetchBrowse(filters: BrowseFilters = {}): Promise<{ skills: SkillStats[]; total: number }> {
   const sort = filters.sort ?? "hot";
   const limit = filters.limit ?? 60;
   const offset = filters.offset ?? 0;
+  const searchTerms = searchTermsFor(filters.search);
 
   let q = supabaseAnon()
     .from("skill_stats")
@@ -49,9 +54,25 @@ export async function fetchBrowse(filters: BrowseFilters = {}): Promise<{ skills
     q = q.eq("cover_status", "done");
   }
 
+  for (const term of searchTerms) {
+    q = q.or(SEARCH_COLUMNS.map((column) => `${column}.ilike.*${term}*`).join(","));
+  }
+
   const { data, error, count } = await q;
   if (error) throw error;
   return { skills: (data ?? []) as SkillStats[], total: count ?? 0 };
+}
+
+export function normalizeSearchQuery(value: string | null | undefined): string {
+  return (value ?? "")
+    .slice(0, MAX_SEARCH_CHARS)
+    .replace(/[^a-z0-9@._/-]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function searchTermsFor(value: string | null | undefined): string[] {
+  return normalizeSearchQuery(value).split(" ").filter(Boolean).slice(0, 6);
 }
 
 export async function fetchTrending(limit = 12, sort: SortKey = "hot", coveredOnly = false): Promise<SkillStats[]> {
@@ -175,4 +196,49 @@ export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>>
     .order("slug", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Array<{ slug: string }>;
+}
+
+const ACTIVITY_PUBLIC_COLUMNS = [
+  "id",
+  "character_id",
+  "event_type",
+  "repo_full_name",
+  "ref",
+  "title",
+  "url",
+  "occurred_at",
+].join(", ");
+
+/**
+ * Returns the most recent N activity rows for a character within the display
+ * window. Wraps in try/catch and returns [] on failure so the page never
+ * throws over a transient ingest issue.
+ */
+export async function fetchActivityForCharacter(
+  characterId: string,
+  opts: { windowDays?: number; limit?: number } = {},
+): Promise<ActivityRow[]> {
+  const windowDays = opts.windowDays ?? 7;
+  const limit = opts.limit ?? 5;
+  const cutoff = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+
+  try {
+    const supabase = supabaseAnon();
+    const { data, error } = await supabase
+      .from("character_activities")
+      .select(ACTIVITY_PUBLIC_COLUMNS)
+      .eq("character_id", characterId)
+      .gt("occurred_at", cutoff)
+      .order("occurred_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(`[fetchActivityForCharacter] ${characterId}:`, error);
+      return [];
+    }
+    return (data ?? []) as unknown as ActivityRow[];
+  } catch (err) {
+    console.error(`[fetchActivityForCharacter] ${characterId} threw:`, err);
+    return [];
+  }
 }

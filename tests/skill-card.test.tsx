@@ -78,14 +78,17 @@ describe("SkillCard", () => {
     expect(html).toContain("PR Review");
   });
 
-  it("renders the install pill with the github CLI command for the slug", () => {
-    const html = renderToString(<SkillCard skill={makeSkill({ slug: "pr-review" })} />);
-    expect(html).toContain("npx github:CarlosJunioor/skillzs-cli install pr-review");
+  it("renders the install pill with a Claude Code /plugin install command", () => {
+    const html = renderToString(
+      <SkillCard skill={makeSkill({ slug: "pr-review", source_repo: "example/pr-review" })} />,
+    );
+    expect(html).toContain("/plugin install pr-review@example/pr-review");
   });
 
   it("shows the HOT stamp when hotness is above 50", () => {
     const hot = renderToString(<SkillCard skill={makeSkill({ hotness: 75 })} />);
     expect(hot).toContain("HOT");
+    expect(hot).toContain("skill-card-stamp--hot");
 
     const cold = renderToString(<SkillCard skill={makeSkill({ hotness: 5 })} />);
     expect(cold).not.toContain("HOT");
@@ -94,6 +97,7 @@ describe("SkillCard", () => {
   it("shows the NEW stamp only when isNew is true", () => {
     const fresh = renderToString(<SkillCard skill={makeSkill()} isNew />);
     expect(fresh).toContain("NEW");
+    expect(fresh).toContain("skill-card-stamp--new");
 
     const stale = renderToString(<SkillCard skill={makeSkill()} />);
     expect(stale).not.toContain(">NEW<");

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { categoryLabel } from "./format";
 import type { SkillStats } from "./types";
 
-const DEFAULT_SITE_URL = "https://skillzs.vercel.app";
+const DEFAULT_SITE_URL = "https://skillzs.dev";
 const DEFAULT_OG_IMAGE = "/fisheye.png";
 const DESCRIPTION_MAX = 160;
 

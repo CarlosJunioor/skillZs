@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
 import { SkillCard } from "@/components/skill-card";
-import { fetchBrowse, type SortKey } from "@/lib/stats";
+import { fetchBrowse, normalizeSearchQuery, type SortKey } from "@/lib/stats";
 import { compactNumber } from "@/lib/format";
 import { buildPageMetadata, collectionJsonLd } from "@/lib/seo";
 
@@ -42,12 +42,13 @@ const MAX_PAGE = 100;
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; cat?: string; page?: string; covered?: string }>;
+  searchParams: Promise<{ sort?: string; cat?: string; page?: string; covered?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const sort = (SORTS.find((s) => s.key === sp.sort)?.key ?? "hot") as SortKey;
   const cat = CATS.find((c) => c.key === sp.cat)?.key ?? "all";
   const coveredOnly = sp.covered === "1";
+  const search = normalizeSearchQuery(sp.q);
   const requestedPage = Number(sp.page ?? "1");
   const page = Number.isInteger(requestedPage)
     ? Math.min(MAX_PAGE, Math.max(1, requestedPage))
@@ -60,19 +61,22 @@ export default async function BrowsePage({
     limit: PAGE,
     offset,
     coveredOnly,
+    search,
   });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE));
-  const buildHref = (overrides: { sort?: string; cat?: string; page?: number; covered?: boolean }) => {
+  const buildHref = (overrides: { sort?: string; cat?: string; page?: number; covered?: boolean; q?: string }) => {
     const params = new URLSearchParams();
     const s = overrides.sort ?? sort;
     const c = overrides.cat ?? cat;
     const p = overrides.page ?? page;
     const cov = overrides.covered ?? coveredOnly;
+    const q = overrides.q ?? search;
     if (s !== "hot") params.set("sort", s);
     if (c !== "all") params.set("cat", c);
     if (p !== 1) params.set("page", String(p));
     if (cov) params.set("covered", "1");
+    if (q) params.set("q", q);
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
   };
@@ -97,6 +101,28 @@ export default async function BrowsePage({
       </header>
 
       <div className="ink-frame-soft bg-[var(--color-paper-2)] p-4 mb-8 space-y-3">
+        <form action="/browse" className="flex flex-wrap items-center gap-2 pb-3 border-b-2 border-dashed border-[var(--color-ink-soft)]">
+          <label htmlFor="skill-search" className="tag-font text-[var(--color-grape)] mr-2">
+            search:
+          </label>
+          <input
+            id="skill-search"
+            name="q"
+            type="search"
+            defaultValue={search}
+            placeholder="skill name, repo, category"
+            className="type-font flex-1 min-w-[210px] bg-[var(--color-paper)] border-2 border-[var(--color-ink)] px-3 py-2 text-sm outline-none shadow-[2px_2px_0_var(--shadow-color)] focus:bg-[var(--color-olive)]"
+          />
+          {sort !== "hot" && <input type="hidden" name="sort" value={sort} />}
+          {cat !== "all" && <input type="hidden" name="cat" value={cat} />}
+          {coveredOnly && <input type="hidden" name="covered" value="1" />}
+          <button type="submit" className="tag-pill">search</button>
+          {search && (
+            <Link href={buildHref({ q: "", page: 1 })} scroll={false} className="tag-pill">
+              clear
+            </Link>
+          )}
+        </form>
         <div className="flex flex-wrap items-center gap-2">
           <span className="tag-font text-[var(--color-grape)] mr-2">sort:</span>
           {SORTS.map((s) => (
@@ -127,7 +153,7 @@ export default async function BrowsePage({
       {skills.length === 0 ? (
         <div className="ink-frame p-16 text-center bg-[var(--color-paper-2)]">
           <p className="display text-3xl mb-2">nothing tagged</p>
-          <p className="type-font">try another filter combo</p>
+          <p className="type-font">try another search or filter combo</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">

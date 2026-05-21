@@ -42,7 +42,7 @@ describe("seo helpers", () => {
     expect(normalizeSiteUrl("example.com/")).toBe("https://example.com");
     expect(normalizeSiteUrl("https://example.com/app/")).toBe("https://example.com/app");
     expect(normalizeSiteUrl("localhost:3000/")).toBe("http://localhost:3000");
-    expect(normalizeSiteUrl("   ")).toBe("https://skillzs.vercel.app");
+    expect(normalizeSiteUrl("   ")).toBe("https://skillzs.dev");
   });
 
   it("builds absolute URLs from the configured site origin", () => {

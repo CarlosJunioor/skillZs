@@ -46,8 +46,14 @@ function character(slug: string, over: Partial<Character> = {}): Character {
   };
 }
 
-function tile(slug: string, x = 0, y = 0): TownTile {
-  return { slug, x, y, w: 1, h: 1, character: character(slug) };
+function tile(slug: string): TownTile {
+  return {
+    slug,
+    building: `${slug.toUpperCase()} HQ`,
+    hotspot: { x: 0, y: 0, w: 0.1, h: 0.1 },
+    character: character(slug),
+    artUrls: [],
+  };
 }
 
 describe("TownPage", () => {
@@ -62,7 +68,7 @@ describe("TownPage", () => {
   });
 
   it("renders the town map without a drawer when searchParams.building is absent", async () => {
-    mocks.loadTownLayout.mockResolvedValue([tile("zeke"), tile("matt-pocock", 1)]);
+    mocks.loadTownLayout.mockResolvedValue([tile("zeke"), tile("matt-pocock")]);
     const element = await TownPage({ searchParams: Promise.resolve({}) });
     const html = renderToString(element);
     expect(html).toContain('href="/?building=zeke"');

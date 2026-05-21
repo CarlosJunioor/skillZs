@@ -19,3 +19,16 @@ export function categoryLabel(category: string | null | undefined): string {
   if (!category) return "Other";
   return category.charAt(0).toUpperCase() + category.slice(1);
 }
+
+export function formatTimeAgo(date: Date, now: Date = new Date()): string {
+  const diffMs = now.getTime() - date.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day <= 30) return `${day}d ago`;
+  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+}

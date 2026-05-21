@@ -17,7 +17,7 @@ import {
 export const revalidate = 300;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: `${siteConfig.title} — zine`,
+  title: `${siteConfig.title} — homepage`,
   description: siteConfig.description,
   path: "/zine",
 });
@@ -87,7 +87,7 @@ export default async function ZinePage({
 
       {!hasData && (
         <div className="ink-frame mt-10 p-10 text-center bg-[var(--color-paper-2)]">
-          <h2 className="display text-4xl mb-3">empty zine</h2>
+          <h2 className="display text-4xl mb-3">empty homepage</h2>
           <p className="type-font mb-4">no skills yet. trigger ingest:</p>
           <code className="type-font bg-[var(--color-ink)] text-[var(--color-paper)] px-4 py-2 inline-block">
             POST /api/cron/ingest

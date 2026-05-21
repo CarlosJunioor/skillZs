@@ -20,22 +20,20 @@ describe("isAuthorizedCronRequest", () => {
 
   it("rejects when request has no credential", () => {
     process.env.CRON_SECRET = "real-secret";
-    expect(isAuthorizedCronRequest(withHeaders({}), "COVER_CRON_SECRET")).toBe(false);
+    expect(isAuthorizedCronRequest(withHeaders({}))).toBe(false);
   });
 
-  it("accepts a matching Authorization: Bearer token", () => {
+  it("accepts a matching CRON_SECRET Authorization: Bearer token", () => {
     process.env.CRON_SECRET = "real-secret";
     expect(isAuthorizedCronRequest(
       withHeaders({ authorization: "Bearer real-secret" }),
-      "COVER_CRON_SECRET",
     )).toBe(true);
   });
 
-  it("accepts a matching x-cron-secret header", () => {
+  it("accepts a matching CRON_SECRET x-cron-secret header", () => {
     process.env.CRON_SECRET = "real-secret";
     expect(isAuthorizedCronRequest(
       withHeaders({ "x-cron-secret": "real-secret" }),
-      "COVER_CRON_SECRET",
     )).toBe(true);
   });
 
@@ -43,6 +41,14 @@ describe("isAuthorizedCronRequest", () => {
     process.env.CRON_SECRET = "real-secret";
     expect(isAuthorizedCronRequest(
       withHeaders({ authorization: "Bearer wrong-secret" }),
+    )).toBe(false);
+  });
+
+  it("rejects CRON_SECRET when a required route-specific secret is missing", () => {
+    process.env.CRON_SECRET = "global-secret";
+
+    expect(isAuthorizedCronRequest(
+      withHeaders({ authorization: "Bearer global-secret" }),
       "COVER_CRON_SECRET",
     )).toBe(false);
   });
@@ -95,7 +101,6 @@ describe("isAuthorizedCronRequest", () => {
     process.env.CRON_SECRET = "real-secret";
     expect(isAuthorizedCronRequest(
       withHeaders({ authorization: "bearer    real-secret  " }),
-      "COVER_CRON_SECRET",
     )).toBe(true);
   });
 
@@ -103,7 +108,6 @@ describe("isAuthorizedCronRequest", () => {
     process.env.CRON_SECRET = "short";
     expect(isAuthorizedCronRequest(
       withHeaders({ authorization: "Bearer shorter-than-not" }),
-      "COVER_CRON_SECRET",
     )).toBe(false);
   });
 });
