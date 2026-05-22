@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Bowlby_One_SC, Permanent_Marker, DM_Mono, Special_Elite } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { JsonLd } from "@/components/json-ld";
 import { SkillZsLogo } from "@/components/skillzs-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -184,6 +185,7 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
