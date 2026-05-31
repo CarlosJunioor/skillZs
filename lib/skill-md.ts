@@ -70,3 +70,66 @@ export function extractTriggers(description: string | null | undefined): string[
   }
   return cleaned.slice(0, 6);
 }
+
+const BORING_HEADERS =
+  /^(overview|when to use|why|why .*matters|common rationalizations|red flags|verification checklist|when stuck|final rule|debugging integration|testing anti-patterns|the iron law|good tests|table of contents)/i;
+
+interface Section {
+  heading: string;
+  content: string;
+}
+
+/** Split a markdown body into level-2 (`##`) sections. `###` stays in content. */
+function splitSections(body: string): Section[] {
+  const sections: Section[] = [];
+  let cur: Section | null = null;
+  for (const line of body.split("\n")) {
+    const h = line.match(/^##\s+(.+?)\s*$/); // level-2 only ("### x" has no space after ##)
+    if (h) {
+      if (cur) sections.push(cur);
+      cur = { heading: h[1].trim(), content: "" };
+    } else if (cur) {
+      cur.content += `${line}\n`;
+    }
+  }
+  if (cur) sections.push(cur);
+  return sections;
+}
+
+/** The skill's punchiest one-liner: Overview line, else Core principle, else first prose. */
+export function extractEssence(body: string): string | null {
+  const overview = splitSections(body).find((s) => /^overview$/i.test(s.heading));
+  if (overview) {
+    const first = overview.content
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l && !l.startsWith("```") && !l.startsWith("**") && !l.startsWith("#"));
+    if (first) return truncateTerminal(sanitizeLine(first));
+  }
+  const core = body.match(/\*\*core principle:?\*\*\s*(.+)/i);
+  if (core) return truncateTerminal(sanitizeLine(core[1]));
+  const prose = body
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l && !l.startsWith("#") && !l.startsWith("```") && !l.startsWith("---"));
+  return prose ? truncateTerminal(sanitizeLine(prose)) : null;
+}
+
+/** The skill's method as a short ordered list of steps. */
+export function extractSteps(body: string, max = 5): string[] {
+  // 1. A top-level numbered list, if there is one.
+  const numbered: string[] = [];
+  for (const m of body.matchAll(/^\s{0,3}\d+\.\s+(.+)$/gm)) {
+    const text = sanitizeLine(m[1]);
+    if (text) numbered.push(truncateTerminal(text));
+  }
+  if (numbered.length >= 2) return numbered.slice(0, max);
+
+  // 2. Otherwise, ## / ### headers that read like method steps.
+  const headers: string[] = [];
+  for (const m of body.matchAll(/^#{2,3}\s+(.+?)\s*$/gm)) {
+    const h = sanitizeLine(m[1]);
+    if (h && !BORING_HEADERS.test(h)) headers.push(truncateTerminal(h));
+  }
+  return headers.slice(0, max);
+}
