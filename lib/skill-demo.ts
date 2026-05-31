@@ -1,4 +1,5 @@
 import { categoryLabel } from "@/lib/format";
+import { readSkillDoc, type SkillDoc } from "@/lib/skill-md";
 import type { SkillStats } from "@/lib/types";
 
 import {
@@ -97,6 +98,47 @@ function superpowersScript(_skill: SkillStats, marketplace: string, loopIndex: n
 }
 
 const SLUG_SCRIPTS: Record<string, SlugScript> = {};
+
+/** Turn a parsed doc + skill into a believable first-person user request. */
+export function synthesizeUserAsk(doc: SkillDoc, skill: SkillStats): string {
+  // Quoted/verbatim triggers keep their authored case ('grill me', 'review this PR').
+  const trigger = doc.triggers[0];
+  if (trigger) return truncateTerminalText(trigger);
+  // Taglines are Title Case value props — lowercase them to read like a user line.
+  if (skill.tagline?.trim()) return truncateTerminalText(skill.tagline.trim().toLowerCase());
+  return `apply ${skill.name} to this task`;
+}
+
+function deriveBodyFrames(lines: string[]): DemoFrame[] {
+  return lines.map((text, i) => ({
+    kind: "response" as const,
+    text: `  ${text}`,
+    pauseAfterMs: i === lines.length - 1 ? 400 : undefined,
+  }));
+}
+
+/** Build one scenario (frame-list) from a parsed doc and a chosen body. */
+export function buildDerivedScenario(
+  skill: SkillStats,
+  marketplace: string,
+  doc: SkillDoc,
+  bodyLines: string[],
+): DemoFrame[] {
+  const slug = skill.slug;
+  const frames: DemoFrame[] = [
+    { kind: "prompt", text: `/plugin install ${slug}@${marketplace}` },
+    { kind: "response", text: `✓ installed ${skill.name} · /${slug} ready`, pauseAfterMs: 250 },
+    { kind: "user", text: synthesizeUserAsk(doc, skill), pauseAfterMs: 500 },
+    {
+      kind: "thinking",
+      text: doc.essence ? `using ${slug} — ${doc.essence}` : `using ${slug}`,
+      pauseAfterMs: 600,
+    },
+    ...deriveBodyFrames(bodyLines),
+    { kind: "thinking", text: "handoff ready" },
+  ];
+  return frames;
+}
 
 function categoryScript(skill: SkillStats, marketplace: string): DemoFrame[] {
   const invoke = `/${skill.slug}`;
