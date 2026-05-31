@@ -13,13 +13,15 @@ export { DEFAULT_SPEED_MS, LOOP_PAUSE_MS, type DemoFrame, type DemoFrameKind };
 
 type SlugScript = (skill: SkillStats, marketplace: string, loopIndex: number) => DemoFrame[];
 
-const SUPERPOWERS_REPO = "obra/superpowers";
 const SUPERPOWERS_PLUGIN_SLUG = "superpowers";
 const SUPERPOWERS_PLUGIN_NAME = "Superpowers";
 const SUPERPOWERS_MARKETPLACE_ALIAS = "claude-plugins-official";
 
+// Only the meta "superpowers" plugin entry gets the curated rotation. Its
+// individual sub-skills (obra-superpowers-*, all source_repo "obra/superpowers")
+// derive their own preview from their SKILL.md like any other skill.
 function isSuperpowersFamily(skill: SkillStats): boolean {
-  return skill.source_repo === SUPERPOWERS_REPO || skill.slug === SUPERPOWERS_PLUGIN_SLUG;
+  return skill.slug === SUPERPOWERS_PLUGIN_SLUG;
 }
 
 export function demoScriptFor(

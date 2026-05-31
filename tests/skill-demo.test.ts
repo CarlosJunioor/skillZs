@@ -267,3 +267,53 @@ cat /tmp/whatever
     expect(all).not.toContain("unrelated config dump");
   });
 });
+
+describe("buildDemoScenarios: superpowers sub-skills", () => {
+  // The catalog has no meta "superpowers" entry — only obra-superpowers-* sub-skills,
+  // all with source_repo "obra/superpowers". They must derive their OWN preview, not
+  // inherit the curated meta-plugin rotation.
+  const readme = `---
+name: test-driven-development
+description: Use when implementing any feature or bugfix.
+---
+
+# TDD
+
+## Overview
+
+Write the test first. Watch it fail.
+
+## Red-Green-Refactor
+
+1. Write a failing test
+2. Write minimal code to pass
+3. Refactor once green
+`;
+
+  it("derives its own preview instead of the curated rotation", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({
+        slug: "obra-superpowers-test-driven-development",
+        name: "test-driven-development",
+        source_repo: "obra/superpowers",
+        category: "coding",
+      }),
+      "obra/superpowers",
+      readme,
+    );
+    const all = scenarios.flat().map((f) => f.text).join("\n");
+    expect(all).toContain("/plugin install obra-superpowers-test-driven-development@obra/superpowers");
+    expect(all).toContain("Write a failing test");
+    expect(all).not.toContain("registered 14 subskills"); // curated-rotation marker
+  });
+
+  it("still gives the meta superpowers plugin entry the curated rotation", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({ slug: "superpowers", name: "Superpowers", source_repo: "obra/superpowers" }),
+      SUPERPOWERS_MARKETPLACE,
+      null,
+    );
+    expect(scenarios).toHaveLength(4);
+    expect(scenarios[0].some((f) => f.text === "registered 14 subskills")).toBe(true);
+  });
+});
