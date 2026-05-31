@@ -115,3 +115,59 @@ describe("extractSteps", () => {
     expect(steps[1]).toBe("Reproduce Consistently");
   });
 });
+
+import { extractTerminalLines, extractExamples } from "../lib/skill-md";
+
+const EXAMPLE_BODY = [
+  "# Skill",
+  "",
+  "## Example: Bug Fix",
+  "",
+  "**RED**",
+  "```typescript",
+  "test('rejects empty email', () => {});",
+  "```",
+  "",
+  "**Verify RED**",
+  "```bash",
+  "$ npm test",
+  "FAIL: expected 'Email required', got undefined",
+  "```",
+  "",
+  "**GREEN**",
+  "```bash",
+  "$ npm test",
+  "PASS",
+  "```",
+  "",
+  "## Example: Feature",
+  "",
+  "```bash",
+  "$ npm run build",
+  "ok",
+  "```",
+  "more prose here",
+  "",
+].join("\n");
+
+describe("extractTerminalLines", () => {
+  it("pulls verbatim lines only from shell-fenced blocks", () => {
+    const lines = extractTerminalLines(EXAMPLE_BODY);
+    expect(lines).toContain("$ npm test");
+    expect(lines).toContain("FAIL: expected 'Email required', got undefined");
+    expect(lines).toContain("PASS");
+    expect(lines).not.toContain("test('rejects empty email', () => {});"); // typescript block excluded
+  });
+});
+
+describe("extractExamples", () => {
+  it("captures each ## Example block with sanitized + shell lines", () => {
+    const examples = extractExamples(EXAMPLE_BODY);
+    expect(examples).toHaveLength(2);
+    expect(examples[0].title).toBe("Bug Fix");
+    expect(examples[0].lines).toContain("RED");
+    expect(examples[0].lines).toContain("$ npm test");
+    expect(examples[0].lines).toContain("PASS");
+    expect(examples[0].lines).not.toContain("test('rejects empty email', () => {});");
+  });
+});

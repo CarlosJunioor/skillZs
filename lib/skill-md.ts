@@ -133,3 +133,65 @@ export function extractSteps(body: string, max = 5): string[] {
   }
   return headers.slice(0, max);
 }
+
+export interface SkillExample {
+  title: string;
+  lines: string[];
+}
+
+const SHELL_LANGS = /^(bash|sh|shell|console|zsh)$/i;
+
+/** Verbatim lines from shell/console fenced blocks across the whole body. */
+export function extractTerminalLines(body: string, max = 8): string[] {
+  const out: string[] = [];
+  for (const m of body.matchAll(/```([\w-]*)\n([\s\S]*?)```/g)) {
+    if (!SHELL_LANGS.test(m[1])) continue;
+    for (const raw of m[2].split("\n")) {
+      const line = raw.replace(/\s+$/, "");
+      if (!line.trim()) continue;
+      out.push(truncateTerminal(line));
+      if (out.length >= max) return out;
+    }
+  }
+  return out;
+}
+
+/** Meaningful lines inside an example: shell sessions verbatim, prose sanitized, other code skipped. */
+function exampleLines(content: string, max: number): string[] {
+  const out: string[] = [];
+  let fence: false | "keep" | "skip" = false;
+  for (const raw of content.split("\n")) {
+    const line = raw.replace(/\s+$/, "");
+    const open = line.match(/^```([\w-]*)/);
+    if (open) {
+      if (fence) {
+        fence = false; // closing fence
+      } else {
+        fence = SHELL_LANGS.test(open[1]) ? "keep" : "skip";
+      }
+      continue;
+    }
+    if (fence === "skip") continue;
+    if (fence === "keep") {
+      if (line.trim()) out.push(truncateTerminal(line));
+    } else {
+      const clean = sanitizeLine(line);
+      if (clean) out.push(truncateTerminal(clean));
+    }
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Worked `## Example...` sections, each with up to `maxLines` body lines. */
+export function extractExamples(body: string, maxExamples = 3, maxLines = 8): SkillExample[] {
+  const out: SkillExample[] = [];
+  for (const section of splitSections(body)) {
+    if (!/^example\b/i.test(section.heading)) continue;
+    const title = sanitizeLine(section.heading).replace(/^example:?\s*/i, "").trim() || "example";
+    const lines = exampleLines(section.content, maxLines);
+    if (lines.length >= 2) out.push({ title, lines });
+    if (out.length >= maxExamples) break;
+  }
+  return out;
+}
