@@ -1236,7 +1236,7 @@ export function SkillTerminalPreview({ scenarios, slug }: Props) {
           <span className="terminal-preview__dot" />
           <span className="terminal-preview__dot" />
           <span className="terminal-preview__dot" />
-          <span className="ml-2 truncate">skillz://{slug}</span>
+          <span className="ml-2 truncate">{`skillz://${slug}`}</span>
         </div>
 
         <pre className="terminal-preview__body" aria-live="off">
