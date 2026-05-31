@@ -7,7 +7,10 @@ const VALID = {
   after_text: "Annotated review with the three real issues",
 };
 
-function chatResponse(payload: unknown, usage = { prompt_tokens: 500, completion_tokens: 100 }) {
+function chatResponse(
+  payload: unknown,
+  usage: { prompt_tokens?: number; completion_tokens?: number } = { prompt_tokens: 500, completion_tokens: 100 },
+) {
   return new Response(
     JSON.stringify({
       choices: [{ message: { content: typeof payload === "string" ? payload : JSON.stringify(payload) } }],
