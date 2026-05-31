@@ -107,7 +107,9 @@ export async function runAvatarGeneration(opts: AvatarRunOptions = {}): Promise<
       stats.errors.push(annotated);
       await sb
         .from("characters")
-        .update({ avatar_status: "failed", avatar_error: msg.slice(0, 500) })
+        // Record the charge already incurred for this attempt so post-generation
+        // failures are visible to the cost dashboard (this attempt's charge, not cumulative).
+        .update({ avatar_status: "failed", avatar_error: msg.slice(0, 500), avatar_cost_usd: costAlreadyCharged })
         .eq("id", c.id)
         .eq("avatar_status", "generating");
     }

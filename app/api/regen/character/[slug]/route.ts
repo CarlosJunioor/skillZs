@@ -35,6 +35,7 @@ async function handle(req: Request, slug: string) {
 
   const statusCol = asset === "building" ? "building_status" : "avatar_status";
   const errorCol = asset === "building" ? "building_error" : "avatar_error";
+  const attemptsCol = asset === "building" ? "building_attempts" : "avatar_attempts";
 
   const sb = supabaseService();
   const { data, error } = await sb
@@ -42,8 +43,13 @@ async function handle(req: Request, slug: string) {
     .update({
       [statusCol]: "pending",
       [errorCol]: null,
+      // Reset the retry budget so the claim function (which refuses rows at the
+      // attempts cap) will actually pick this requeued asset up again.
+      [attemptsCol]: 0,
     })
     .eq("slug", slug)
+    // Don't clobber an in-flight generation the worker is about to commit.
+    .neq(statusCol, "generating")
     .select(`slug, ${statusCol}`)
     .maybeSingle();
 

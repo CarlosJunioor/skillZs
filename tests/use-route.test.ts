@@ -118,6 +118,17 @@ describe("POST /api/use", () => {
     expect(await res.json()).toEqual({ ok: false, error: "rate limit exceeded" });
   });
 
+  it("returns 404 when the skill does not exist (FK violation)", async () => {
+    const err = new Error("unknown skill");
+    err.name = "NotFoundError";
+    mocks.recordInteraction.mockRejectedValue(err);
+
+    const res = await POST(jsonReq({ body: JSON.stringify({ skillId: SKILL_ID }) }));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ ok: false, error: "unknown skill" });
+  });
+
   it("hides unexpected persistence errors", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.recordInteraction.mockRejectedValue(new Error("database is down"));

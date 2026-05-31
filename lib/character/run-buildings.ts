@@ -118,7 +118,9 @@ export async function runBuildingGeneration(
       stats.errors.push(annotated);
       await sb
         .from("characters")
-        .update({ building_status: "failed", building_error: msg.slice(0, 500) })
+        // Record the charge already incurred for this attempt so post-generation
+        // failures are visible to the cost dashboard (this attempt's charge, not cumulative).
+        .update({ building_status: "failed", building_error: msg.slice(0, 500), building_cost_usd: costAlreadyCharged })
         .eq("id", c.id)
         .eq("building_status", "generating");
     }

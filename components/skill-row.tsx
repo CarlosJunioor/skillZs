@@ -1,8 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { SkillCard } from "./skill-card";
 import type { SkillStats } from "@/lib/types";
+
+const NO_OP_SUBSCRIBE = () => () => {};
+const SERVER_NULL = () => null;
+
+// Cache the client's "page load" timestamp once. getSnapshot must be
+// referentially stable (else useSyncExternalStore loops), and Date.now() must
+// not run during a component render — the purity lint forbids it, and it would
+// otherwise drift between the SSR and hydration renders.
+let clientNow: number | null = null;
+function getClientNow(): number {
+  if (clientNow === null) clientNow = Date.now();
+  return clientNow;
+}
+
+/** The client's load time, or null during SSR + the hydration render. */
+function useClientNow(): number | null {
+  return useSyncExternalStore(NO_OP_SUBSCRIBE, getClientNow, SERVER_NULL);
+}
 
 interface Props {
   title: string;
@@ -16,7 +34,13 @@ interface Props {
 
 export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14, watermark }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [cutoff] = useState(() => Date.now() - newCutoffDays * 24 * 60 * 60 * 1000);
+  // Compute the "new" cutoff only once hydrated. Calling Date.now() during the
+  // SSR/hydration render runs on two different clocks, so a skill whose
+  // first_seen straddles the boundary would render the NEW stamp on the server
+  // but not the client (or vice versa) — a hydration mismatch under ISR. Until
+  // hydrated, cutoff is null ("not new yet"); the stamp appears post-hydration.
+  const now = useClientNow();
+  const cutoff = now === null ? null : now - newCutoffDays * 24 * 60 * 60 * 1000;
 
   function scroll(dir: 1 | -1) {
     const el = scrollerRef.current;
@@ -69,7 +93,7 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
             <SkillCard
               skill={s}
               size={size}
-              isNew={new Date(s.first_seen).getTime() > cutoff}
+              isNew={cutoff !== null && new Date(s.first_seen).getTime() > cutoff}
             />
           </div>
         ))}

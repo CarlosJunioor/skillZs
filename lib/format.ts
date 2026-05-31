@@ -1,6 +1,9 @@
 export function compactNumber(n: number): string {
+  if (!Number.isFinite(n)) return "0";
   if (n < 1000) return n.toString();
-  if (n < 1_000_000) return (n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, "") + "k";
+  // Cut over to the M branch at 999_500 so the k-branch's toFixed(0) rounding
+  // can never produce "1000k" for inputs in [999_500, 999_999].
+  if (n < 999_500) return (n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, "") + "k";
   return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
 }
 

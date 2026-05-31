@@ -24,6 +24,7 @@ vi.mock("../lib/supabase/server", () => ({
           mocks.state.lastFilter = { column, value };
           return builder;
         },
+        neq() { return builder; },
         select() { return builder; },
         maybeSingle() {
           return Promise.resolve({ data: mocks.state.row, error: mocks.state.error });
@@ -99,6 +100,7 @@ describe("POST /api/regen/character/[slug]", () => {
     expect(mocks.state.lastPayload).toEqual({
       avatar_status: "pending",
       avatar_error: null,
+      avatar_attempts: 0,
     });
     expect(mocks.state.lastFilter).toEqual({ column: "slug", value: "zeke" });
   });
@@ -110,6 +112,7 @@ describe("POST /api/regen/character/[slug]", () => {
     expect(mocks.state.lastPayload).toEqual({
       avatar_status: "pending",
       avatar_error: null,
+      avatar_attempts: 0,
     });
   });
 
@@ -126,6 +129,7 @@ describe("POST /api/regen/character/[slug]", () => {
     expect(mocks.state.lastPayload).toEqual({
       building_status: "pending",
       building_error: null,
+      building_attempts: 0,
     });
   });
 

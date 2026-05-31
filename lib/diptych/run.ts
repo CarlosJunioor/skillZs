@@ -123,7 +123,10 @@ export async function runDiptychGeneration(opts: DiptychRunOptions = {}): Promis
       stats.errors.push(annotated);
       await sb
         .from("skills")
-        .update({ diptych_status: "failed", diptych_error: msg.slice(0, 500) })
+        // Persist the cost already charged for this attempt so the admin spend
+        // dashboard sees post-generation failures (charged but not committed),
+        // not just successes. Reflects this attempt's charge, not a cumulative total.
+        .update({ diptych_status: "failed", diptych_error: msg.slice(0, 500), diptych_cost_usd: costAlreadyCharged })
         .eq("id", c.id)
         .eq("diptych_status", "generating");
     }

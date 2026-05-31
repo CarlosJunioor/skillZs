@@ -1,7 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  recordInteraction: vi.fn(),
+  supabaseClient: { kind: "supabase-service" },
+}));
+
+vi.mock("../lib/supabase/server", () => ({
+  supabaseService: () => mocks.supabaseClient,
+}));
+
+vi.mock("../lib/interactions", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/interactions")>();
+  return {
+    ...actual,
+    recordInteraction: mocks.recordInteraction,
+  };
+});
+
 import { POST } from "../app/api/vote/route";
 
 const ORIGIN = "https://skillzs.test";
+const SKILL_ID = "123e4567-e89b-42d3-a456-426614174000";
 
 function jsonReq(init: { body?: string; headers?: Record<string, string> } = {}): Request {
   return new Request(`${ORIGIN}/api/vote`, {
@@ -10,6 +29,7 @@ function jsonReq(init: { body?: string; headers?: Record<string, string> } = {})
       host: "skillzs.test",
       "content-type": "application/json",
       origin: ORIGIN,
+      "x-vercel-forwarded-for": "203.0.113.42",
       ...(init.headers ?? {}),
     },
     body: init.body,
@@ -21,11 +41,13 @@ describe("POST /api/vote", () => {
     process.env.SUPABASE_URL = "https://stub.supabase.co";
     process.env.SUPABASE_SERVICE_KEY = "stub-service-key";
     process.env.IP_HASH_SALT = "stub-salt";
+    mocks.recordInteraction.mockReset();
   });
   afterEach(() => {
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_KEY;
     delete process.env.IP_HASH_SALT;
+    vi.restoreAllMocks();
   });
 
   it("rejects non-JSON content type with 415", async () => {
@@ -73,9 +95,57 @@ describe("POST /api/vote", () => {
   it("returns 500 when IP_HASH_SALT is not configured", async () => {
     delete process.env.IP_HASH_SALT;
     const res = await POST(jsonReq({
-      body: JSON.stringify({ skillId: "123e4567-e89b-42d3-a456-426614174000" }),
+      body: JSON.stringify({ skillId: SKILL_ID }),
     }));
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ ok: false, error: "server not configured" });
+  });
+
+  it("records a valid vote and returns the live count", async () => {
+    mocks.recordInteraction.mockResolvedValue(12);
+
+    const res = await POST(jsonReq({ body: JSON.stringify({ skillId: SKILL_ID }) }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, count: 12 });
+    expect(mocks.recordInteraction).toHaveBeenCalledWith(
+      mocks.supabaseClient,
+      "vote",
+      SKILL_ID,
+      expect.stringMatching(/^[0-9a-f]{64}$/),
+    );
+  });
+
+  it("returns 429 when the interaction rate limit is exceeded", async () => {
+    const err = new Error("rate limit exceeded");
+    err.name = "RateLimitError";
+    mocks.recordInteraction.mockRejectedValue(err);
+
+    const res = await POST(jsonReq({ body: JSON.stringify({ skillId: SKILL_ID }) }));
+
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ ok: false, error: "rate limit exceeded" });
+  });
+
+  it("returns 404 when the skill does not exist (FK violation)", async () => {
+    const err = new Error("unknown skill");
+    err.name = "NotFoundError";
+    mocks.recordInteraction.mockRejectedValue(err);
+
+    const res = await POST(jsonReq({ body: JSON.stringify({ skillId: SKILL_ID }) }));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ ok: false, error: "unknown skill" });
+  });
+
+  it("hides unexpected persistence errors behind a 500", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.recordInteraction.mockRejectedValue(new Error("database is down"));
+
+    const res = await POST(jsonReq({ body: JSON.stringify({ skillId: SKILL_ID }) }));
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "server error" });
+    expect(errorSpy).toHaveBeenCalled();
   });
 });

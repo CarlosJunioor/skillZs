@@ -5,6 +5,7 @@ type State = {
   error: { message: string } | null;
   lastPayload?: unknown;
   lastFilter?: { column: string; value: unknown };
+  lastNeq?: { column: string; value: unknown };
 };
 
 const mocks = vi.hoisted(() => ({
@@ -24,6 +25,10 @@ vi.mock("../lib/supabase/server", () => ({
         },
         eq(column: string, value: unknown) {
           mocks.state.lastFilter = { column, value };
+          return builder;
+        },
+        neq(column: string, value: unknown) {
+          mocks.state.lastNeq = { column, value };
           return builder;
         },
         select(cols: string) {
@@ -57,6 +62,7 @@ describe("POST /api/regen/[slug]", () => {
     mocks.state.error = null;
     mocks.state.lastPayload = undefined;
     mocks.state.lastFilter = undefined;
+    mocks.state.lastNeq = undefined;
   });
 
   afterEach(() => {
@@ -98,7 +104,10 @@ describe("POST /api/regen/[slug]", () => {
     expect(mocks.state.lastPayload).toEqual({
       diptych_status: "pending",
       diptych_error: null,
+      diptych_attempts: 0,
     });
     expect(mocks.state.lastFilter).toEqual({ column: "slug", value: "pr-review" });
+    // Must not clobber an in-flight generation.
+    expect(mocks.state.lastNeq).toEqual({ column: "diptych_status", value: "generating" });
   });
 });

@@ -29,8 +29,16 @@ async function handle(req: Request, slug: string) {
     .update({
       diptych_status: "pending",
       diptych_error: null,
+      // Reset the retry budget: a deliberate requeue is a fresh request, and the
+      // claim function refuses rows at the attempts cap. Without this, requeuing
+      // an exhausted row would report success but never actually regenerate.
+      diptych_attempts: 0,
     })
     .eq("slug", slug)
+    // Never clobber an in-flight generation back to 'pending' — the worker's
+    // own update filters on diptych_status='generating' and would silently drop
+    // the (already paid-for) result it is about to commit.
+    .neq("diptych_status", "generating")
     .select("slug, diptych_status")
     .maybeSingle();
 

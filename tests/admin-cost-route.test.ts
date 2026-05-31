@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type SkillRow = { diptych_status: string | null; diptych_cost_usd: number | string | null };
-type CharRow = { avatar_status: string | null; avatar_cost_usd: number | string | null };
+type CharRow = {
+  avatar_status: string | null;
+  avatar_cost_usd: number | string | null;
+  building_status?: string | null;
+  building_cost_usd?: number | string | null;
+};
 type State = {
   skills: SkillRow[];
   skillsError: { message: string } | null;
@@ -91,13 +96,16 @@ describe("GET /api/admin/cost", () => {
       characters: {
         total: 0,
         by_status: {},
+        building_by_status: {},
         total_usd: 0,
+        avatar_usd: 0,
+        building_usd: 0,
       },
       grand_total_usd: 0,
     });
   });
 
-  it("aggregates per-status counts and totals for both pipelines", async () => {
+  it("aggregates per-status counts and totals, including building spend", async () => {
     mocks.state.skills = [
       { diptych_status: "done", diptych_cost_usd: 0.04 },
       { diptych_status: "done", diptych_cost_usd: 0.04 },
@@ -107,9 +115,9 @@ describe("GET /api/admin/cost", () => {
       { diptych_status: "done", diptych_cost_usd: "0.10" },
     ];
     mocks.state.characters = [
-      { avatar_status: "done", avatar_cost_usd: 0.04 },
-      { avatar_status: "done", avatar_cost_usd: 0.04 },
-      { avatar_status: "pending", avatar_cost_usd: 0 },
+      { avatar_status: "done", avatar_cost_usd: 0.04, building_status: "done", building_cost_usd: 0.04 },
+      { avatar_status: "done", avatar_cost_usd: 0.04, building_status: "failed", building_cost_usd: 0 },
+      { avatar_status: "pending", avatar_cost_usd: 0, building_status: "pending", building_cost_usd: 0.19 },
     ];
     const res = await call("diptych-secret");
     expect(res.status).toBe(200);
@@ -120,10 +128,13 @@ describe("GET /api/admin/cost", () => {
       total_usd: 0.37,
       characters: {
         total: 3,
-        by_status: { done: 2, pending: 1 },
-        total_usd: 0.08,
+        by_status: { done: 2, pending: 1 }, // avatar
+        building_by_status: { done: 1, failed: 1, pending: 1 },
+        total_usd: 0.31, // avatar 0.08 + building 0.23
+        avatar_usd: 0.08,
+        building_usd: 0.23,
       },
-      grand_total_usd: 0.45,
+      grand_total_usd: 0.68, // 0.37 + 0.31
     });
   });
 

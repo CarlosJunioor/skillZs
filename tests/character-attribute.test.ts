@@ -8,21 +8,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 type Row = { id: string; gh_handle: string | null; x_handle: string | null };
 
 function fakeClient(rows: Row[], opts: { error?: { message: string } } = {}): SupabaseClient {
-  const lastFilter = { value: undefined as string | undefined };
+  const calls = { selected: false };
   const sb = {
     from(table: string) {
       if (table !== "characters") throw new Error(`unexpected table ${table}`);
-      const builder = {
-        select() { return builder; },
-        or(expr: string) { lastFilter.value = expr; return builder; },
-        limit() {
+      return {
+        // Attribution fetches the whole (tiny) roster and matches in JS — no
+        // filter is built from the untrusted handle — so select() is terminal.
+        select() {
+          calls.selected = true;
           if (opts.error) return Promise.resolve({ data: null, error: opts.error });
           return Promise.resolve({ data: rows, error: null });
         },
       };
-      return builder;
     },
-    _lastFilter: lastFilter,
+    _calls: calls,
   } as unknown as SupabaseClient;
   return sb;
 }
@@ -57,6 +57,27 @@ describe("normaliseHandle", () => {
 
   it("rejects values containing whitespace", () => {
     expect(normaliseHandle("matt pocock")).toBe("");
+  });
+
+  it("rejects PostgREST/ilike metacharacters (filter-injection guard)", () => {
+    // These would otherwise break out of the `.or()` value position or act as
+    // ilike wildcards when interpolated into the attribution filter.
+    expect(normaliseHandle("*")).toBe("");
+    expect(normaliseHandle("a%")).toBe("");
+    expect(normaliseHandle("x,id.not.is.null")).toBe("");
+    expect(normaliseHandle("a)or(id.eq.0")).toBe("");
+    expect(normaliseHandle("name.eq.foo")).toBe("");
+  });
+
+  it("accepts real GitHub/X handles including hyphen and underscore", () => {
+    expect(normaliseHandle("mattpocockuk")).toBe("mattpocockuk");
+    expect(normaliseHandle("t3dotgg")).toBe("t3dotgg");
+    expect(normaliseHandle("some-user")).toBe("some-user");
+    expect(normaliseHandle("some_user")).toBe("some_user");
+  });
+
+  it("rejects implausibly long handles", () => {
+    expect(normaliseHandle("a".repeat(40))).toBe("");
   });
 });
 
@@ -102,5 +123,31 @@ describe("attributeSkillToCharacter", () => {
     const sb = fakeClient([{ id: "c-x", gh_handle: "anyone", x_handle: null }]);
     const out = await attributeSkillToCharacter(sb, { author: 42 as unknown as string });
     expect(out).toEqual({ character_id: null, match_reason: null });
+  });
+
+  it("does not attribute on an ilike wildcard over-match (underscore)", async () => {
+    // "a_c" ilike-matches a stored "abc" at the DB layer, but it is not an exact
+    // handle, so attribution must reject it rather than mis-attribute.
+    const sb = fakeClient([{ id: "c-1", gh_handle: "abc", x_handle: null }]);
+    const out = await attributeSkillToCharacter(sb, { author: "a_c" });
+    expect(out).toEqual({ character_id: null, match_reason: null });
+  });
+
+  it("picks the exact match when the ilike query returns several rows", async () => {
+    const sb = fakeClient([
+      { id: "c-over", gh_handle: "axc", x_handle: null },
+      { id: "c-exact", gh_handle: "a_c", x_handle: null },
+    ]);
+    const out = await attributeSkillToCharacter(sb, { author: "a_c" });
+    expect(out).toEqual({ character_id: "c-exact", match_reason: "gh_handle" });
+  });
+
+  it("does not query or attribute when author carries injection metacharacters", async () => {
+    // An injection-shaped author normalises to "" and attribution short-circuits
+    // to null before any query runs.
+    const sb = fakeClient([{ id: "c-1", gh_handle: "mattpocockuk", x_handle: null }]);
+    const out = await attributeSkillToCharacter(sb, { author: "x,id.not.is.null" });
+    expect(out).toEqual({ character_id: null, match_reason: null });
+    expect((sb as unknown as { _calls: { selected: boolean } })._calls.selected).toBe(false);
   });
 });

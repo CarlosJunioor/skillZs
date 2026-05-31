@@ -42,8 +42,12 @@ export async function POST(req: Request) {
     const count = await recordInteraction(supabaseService(), "use", skillId, ipHash);
     return NextResponse.json({ ok: true, count });
   } catch (error) {
-    if ((error as Error).name === "RateLimitError") {
+    const name = (error as Error).name;
+    if (name === "RateLimitError") {
       return NextResponse.json({ ok: false, error: "rate limit exceeded" }, { status: 429 });
+    }
+    if (name === "NotFoundError") {
+      return NextResponse.json({ ok: false, error: "unknown skill" }, { status: 404 });
     }
     console.error("use failed:", error);
     return NextResponse.json({ ok: false, error: "server error" }, { status: 500 });

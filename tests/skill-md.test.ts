@@ -158,6 +158,11 @@ describe("extractTerminalLines", () => {
     expect(lines).toContain("PASS");
     expect(lines).not.toContain("test('rejects empty email', () => {});"); // typescript block excluded
   });
+
+  it("extracts shell lines from a CRLF-encoded body", () => {
+    const body = "```bash\r\n$ npm run build\r\n$ npm test\r\n```\r\n";
+    expect(extractTerminalLines(body)).toEqual(["$ npm run build", "$ npm test"]);
+  });
 });
 
 describe("extractExamples", () => {

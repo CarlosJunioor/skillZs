@@ -27,8 +27,10 @@ export function normaliseHandle(input: string | null | undefined): string {
   h = h.replace(/^https?:\/\/(?:www\.)?(github|twitter|x)\.com\//, "");
   // Strip leading @, trailing slash, trailing whitespace artefacts.
   h = h.replace(/^@+/, "").replace(/\/+$/, "");
-  // GitHub usernames can include hyphens; reject anything with whitespace.
-  if (/\s/.test(h)) return "";
+  // Allowlist real handle characters: GitHub usernames are [a-z0-9-] (<=39 chars),
+  // X handles [a-z0-9_] (<=15). This rejects junk early and is defense-in-depth —
+  // attribution no longer interpolates the value into any query (see below).
+  if (!/^[a-z0-9_-]{1,39}$/.test(h)) return "";
   return h;
 }
 
@@ -49,18 +51,27 @@ export async function attributeSkillToCharacter(
   const norm = normaliseHandle(raw);
   if (!norm) return { character_id: null, match_reason: null };
 
+  // The character roster is a small, operator-curated set, so fetch it whole and
+  // match in JS. This deliberately keeps the untrusted handle OUT of the query:
+  // no `.ilike()` (whose `_`/`%` wildcards could over-match) and no interpolated
+  // `.or()` string (which could be injected). The match is an exact,
+  // case-insensitive equality on gh_handle / x_handle.
   const { data, error } = await sb
     .from("characters")
-    .select("id, gh_handle, x_handle")
-    .or(`gh_handle.ilike.${norm},x_handle.ilike.${norm}`)
-    .limit(1);
+    .select("id, gh_handle, x_handle");
 
-  if (error || !data || data.length === 0) {
+  if (error || !data) {
     return { character_id: null, match_reason: null };
   }
 
-  const row = data[0] as { id: string; gh_handle: string | null; x_handle: string | null };
-  const reason: MatchReason =
-    (row.gh_handle ?? "").toLowerCase() === norm ? "gh_handle" : "x_handle";
-  return { character_id: row.id, match_reason: reason };
+  const rows = data as Array<{ id: string; gh_handle: string | null; x_handle: string | null }>;
+  for (const row of rows) {
+    if ((row.gh_handle ?? "").toLowerCase() === norm) {
+      return { character_id: row.id, match_reason: "gh_handle" };
+    }
+    if ((row.x_handle ?? "").toLowerCase() === norm) {
+      return { character_id: row.id, match_reason: "x_handle" };
+    }
+  }
+  return { character_id: null, match_reason: null };
 }

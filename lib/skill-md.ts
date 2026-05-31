@@ -144,7 +144,9 @@ const SHELL_LANGS = /^(bash|sh|shell|console|zsh)$/i;
 /** Verbatim lines from shell/console fenced blocks across the whole body. */
 export function extractTerminalLines(body: string, max = 8): string[] {
   const out: string[] = [];
-  for (const m of body.matchAll(/```([\w-]*)\n([\s\S]*?)```/g)) {
+  // Tolerate CRLF: a Windows-authored SKILL.md puts \r before \n after the
+  // language tag, which would otherwise leave the block unmatched.
+  for (const m of body.matchAll(/```([\w-]*)\r?\n([\s\S]*?)```/g)) {
     if (!SHELL_LANGS.test(m[1])) continue;
     for (const raw of m[2].split("\n")) {
       const line = raw.replace(/\s+$/, "");
