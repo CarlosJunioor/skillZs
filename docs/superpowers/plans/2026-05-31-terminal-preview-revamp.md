@@ -1087,10 +1087,12 @@ function deriveScenarios(skill: SkillStats, marketplace: string, doc: SkillDoc):
   if (usableExamples.length >= 2) {
     return usableExamples.map((ex) => buildDerivedScenario(skill, marketplace, doc, ex.lines));
   }
+  // Prefer the skill's method (steps) over a raw fenced block — a stray code
+  // block elsewhere in the doc is often unrelated to what the skill does.
   const body =
     usableExamples[0]?.lines ??
-    (doc.terminalLines.length >= MIN_BODY_LINES ? doc.terminalLines : null) ??
-    (doc.steps.length >= MIN_BODY_LINES ? doc.steps : null);
+    (doc.steps.length >= MIN_BODY_LINES ? doc.steps : null) ??
+    (doc.terminalLines.length >= MIN_BODY_LINES ? doc.terminalLines : null);
   if (!body) return [];
   return [buildDerivedScenario(skill, marketplace, doc, body)];
 }

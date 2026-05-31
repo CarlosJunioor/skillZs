@@ -116,7 +116,8 @@ Branching:
      2. `response`— `✓ installed <name> · /<slug> ready`
      3. `user`    — synthesized real ask from `triggers`
      4. `thinking`— `using <slug> — <essence>`
-     5. body — prefer `example.lines` / `terminalLines`; else `steps`
+     5. body — prefer `example.lines`, then `steps` (the skill's method), then
+        `terminalLines` (a stray fenced block is often unrelated to the skill)
      6. `thinking` — short closing (essence/iron-law line, or generic)
 3. **else** → existing `categoryScript()` fallback.
 
