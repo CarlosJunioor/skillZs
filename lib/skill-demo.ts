@@ -35,6 +35,43 @@ export function demoScriptFor(
   return categoryScript(skill, marketplace);
 }
 
+const MIN_BODY_LINES = 3;
+
+/** Top-level: returns 1+ scenarios (frame-lists) for the preview to cycle. */
+export function buildDemoScenarios(
+  skill: SkillStats,
+  marketplace: string,
+  readme: string | null | undefined,
+): DemoFrame[][] {
+  if (isSuperpowersFamily(skill)) {
+    return SUPERPOWERS_ROTATIONS.map((_r, i) =>
+      superpowersScript(skill, SUPERPOWERS_MARKETPLACE_ALIAS, i),
+    );
+  }
+
+  const doc = readSkillDoc(readme);
+  if (doc) {
+    const derived = deriveScenarios(skill, marketplace, doc);
+    if (derived.length) return derived;
+  }
+
+  return [categoryScript(skill, marketplace)];
+}
+
+/** Build derived scenarios, rotating across examples when there are 2+. */
+function deriveScenarios(skill: SkillStats, marketplace: string, doc: SkillDoc): DemoFrame[][] {
+  const usableExamples = doc.examples.filter((e) => e.lines.length >= MIN_BODY_LINES);
+  if (usableExamples.length >= 2) {
+    return usableExamples.map((ex) => buildDerivedScenario(skill, marketplace, doc, ex.lines));
+  }
+  const body =
+    usableExamples[0]?.lines ??
+    (doc.terminalLines.length >= MIN_BODY_LINES ? doc.terminalLines : null) ??
+    (doc.steps.length >= MIN_BODY_LINES ? doc.steps : null);
+  if (!body) return [];
+  return [buildDerivedScenario(skill, marketplace, doc, body)];
+}
+
 const SUPERPOWERS_ROTATIONS = [
   {
     task: "help me design a rate limiter for our API",
@@ -90,7 +127,7 @@ function superpowersScript(_skill: SkillStats, marketplace: string, loopIndex: n
     { kind: "prompt", text: `/plugin install ${SUPERPOWERS_PLUGIN_SLUG}@${marketplace}` },
     { kind: "response", text: `installed ${SUPERPOWERS_PLUGIN_NAME} from ${marketplace}`, pauseAfterMs: 200 },
     { kind: "response", text: "registered 14 subskills", pauseAfterMs: 600 },
-    { kind: "prompt", text: r.task, pauseAfterMs: 500 },
+    { kind: "user", text: r.task, pauseAfterMs: 500 },
     { kind: "thinking", text: r.thinking, pauseAfterMs: 700 },
     ...lineFrames,
     { kind: "thinking", text: r.handoff },

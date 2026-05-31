@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SPEED_MS,
-  demoScriptFor,
-  sampleTaskFor,
+  buildDemoScenarios,
   buildDerivedScenario,
+  sampleTaskFor,
   synthesizeUserAsk,
-  type DemoFrame,
 } from "../lib/skill-demo";
 import { readSkillDoc } from "../lib/skill-md";
 import type { Category, SkillStats } from "../lib/types";
@@ -37,19 +36,20 @@ function makeSkill(overrides: Partial<SkillStats> = {}): SkillStats {
 
 const SUPERPOWERS_MARKETPLACE = "claude-plugins-official";
 
-describe("demoScriptFor: superpowers", () => {
+const READELESS = null;
+
+describe("buildDemoScenarios: superpowers", () => {
   const skill = makeSkill({
     slug: "superpowers",
     name: "Superpowers",
     category: "agent",
-    tagline: "the meta-skill that loads other skills",
-    description: "Loads brainstorming, tdd, diagnose, and more on demand.",
     source_repo: "obra/superpowers",
   });
 
-  it("starts every loop with the install command", () => {
-    for (let i = 0; i < 4; i += 1) {
-      const frames = demoScriptFor(skill, SUPERPOWERS_MARKETPLACE, i);
+  it("returns one scenario per curated rotation (4)", () => {
+    const scenarios = buildDemoScenarios(skill, SUPERPOWERS_MARKETPLACE, READELESS);
+    expect(scenarios).toHaveLength(4);
+    for (const frames of scenarios) {
       expect(frames[0]).toEqual(
         expect.objectContaining({
           kind: "prompt",
@@ -59,117 +59,93 @@ describe("demoScriptFor: superpowers", () => {
     }
   });
 
-  it("rotates across 4 subskills (brainstorming, diagnose, tdd, writing-plans)", () => {
-    const subskills = [0, 1, 2, 3].map((i) => {
-      const frames = demoScriptFor(skill, SUPERPOWERS_MARKETPLACE, i);
-      const thinking = frames.find(
-        (f) => f.kind === "thinking" && f.text.startsWith("using "),
-      );
-      return thinking?.text ?? "";
-    });
-    expect(subskills[0]).toContain("brainstorming");
-    expect(subskills[1]).toContain("diagnose");
-    expect(subskills[2]).toContain("tdd");
-    expect(subskills[3]).toContain("writing-plans");
-  });
-
-  it("wraps around after the last rotation", () => {
-    const loop0 = demoScriptFor(skill, SUPERPOWERS_MARKETPLACE, 0);
-    const loop4 = demoScriptFor(skill, SUPERPOWERS_MARKETPLACE, 4);
-    expect(loop4.map((f) => f.text)).toEqual(loop0.map((f) => f.text));
-  });
-
-  it("includes a user prompt that doesn't start with a slash", () => {
-    const frames = demoScriptFor(skill, SUPERPOWERS_MARKETPLACE, 0);
-    const userPrompt = frames.filter((f) => f.kind === "prompt")[1];
-    expect(userPrompt).toBeDefined();
-    expect(userPrompt.text.startsWith("/")).toBe(false);
+  it("rotates across the 4 subskills and marks the task as a user turn", () => {
+    const scenarios = buildDemoScenarios(skill, SUPERPOWERS_MARKETPLACE, READELESS);
+    const thinkings = scenarios.map(
+      (frames) => frames.find((f) => f.kind === "thinking" && f.text.startsWith("using "))?.text ?? "",
+    );
+    expect(thinkings[0]).toContain("brainstorming");
+    expect(thinkings[1]).toContain("diagnose");
+    expect(thinkings[2]).toContain("tdd");
+    expect(thinkings[3]).toContain("writing-plans");
+    // the task line is now a user turn, not a slash prompt
+    for (const frames of scenarios) {
+      expect(frames.some((f) => f.kind === "user")).toBe(true);
+    }
   });
 });
 
-describe("demoScriptFor: category fallback", () => {
-  it("uses the slash invoke for unknown slugs", () => {
-    const frames = demoScriptFor(
+describe("buildDemoScenarios: derived from SKILL.md", () => {
+  const readme = `---
+name: pr-review
+description: Use when the user wants to review a pull request, or mentions 'review this PR'.
+---
+
+# PR Review
+
+## Overview
+
+Group review findings by risk before you comment.
+
+## Example: Risky diff
+
+\`\`\`bash
+$ git diff --stat
+3 files changed, 142 insertions(+)
+\`\`\`
+findings: 1 high, 1 nit
+
+## Example: Clean diff
+
+\`\`\`bash
+$ git diff --stat
+1 file changed, 4 insertions(+)
+\`\`\`
+findings: none
+`;
+
+  it("derives a scenario that shows the real ask + real terminal output", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({ slug: "pr-review", name: "PR Review", category: "coding" }),
+      "example/pr-review",
+      readme,
+    );
+    const all = scenarios.flat().map((f) => f.text).join("\n");
+    expect(all).toContain("/plugin install pr-review@example/pr-review");
+    expect(scenarios.flat().some((f) => f.kind === "user" && f.text === "review this PR")).toBe(true);
+    expect(all).toContain("$ git diff --stat");
+  });
+
+  it("rotates when the readme yields 2+ examples", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({ slug: "pr-review", name: "PR Review" }),
+      "example/pr-review",
+      readme,
+    );
+    expect(scenarios.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("buildDemoScenarios: fallback", () => {
+  it("uses the category script when there is no readme", () => {
+    const scenarios = buildDemoScenarios(
       makeSkill({ slug: "pr-review", category: "coding" }),
       "example/pr-review",
-      0,
+      READELESS,
     );
-    expect(frames[0].text).toBe("/plugin install pr-review@example/pr-review");
-    expect(frames.find((f) => f.text === "registered trigger /pr-review")).toBeTruthy();
-    expect(frames.find((f) => f.text.includes("auto-selected coding"))).toBeTruthy();
+    expect(scenarios).toHaveLength(1);
+    const all = scenarios[0].map((f) => f.text).join("\n");
+    expect(all).toContain("auto-selected coding workflow");
   });
 
-  it.each<{ category: Category; flavor: string; output: string }>([
-    { category: "coding", flavor: "scanning diff", output: "findings, patch plan" },
-    { category: "creative", flavor: "generated 3 directions", output: "directions, variants" },
-    { category: "agent", flavor: "delegated step 1", output: "delegated steps" },
-    { category: "utils", flavor: "normalized input", output: "normalized data" },
-    { category: "research", flavor: "fetched 8 sources", output: "summary, sources" },
-    { category: null, flavor: "applied the skill", output: "focused instructions" },
-  ])("emits category flavor and fallback output for $category", ({ category, flavor, output }) => {
-    const frames = demoScriptFor(
-      makeSkill({
-        slug: `demo-${category ?? "other"}`,
-        category,
-        before_text: null,
-        after_text: null,
-      }),
+  it("falls back when the readme has no usable body", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({ slug: "thin", category: "research" }),
       "demo/marketplace",
-      0,
+      "---\nname: thin\ndescription: Use when x.\n---\n\nJust prose, no steps.\n",
     );
-    const all = frames.map((f) => f.text).join("\n");
-    expect(all).toContain(flavor);
-    expect(all).toContain(`output: ${output}`);
-  });
-
-  it("emits before/after lines when those texts are present (even if only before is set)", () => {
-    const frames = demoScriptFor(
-      makeSkill({ slug: "lopsided", before_text: "only before", after_text: null }),
-      "demo/marketplace",
-      0,
-    );
-    const all = frames.map((f) => f.text).join("\n");
-    expect(all).toContain("before: only before");
-    expect(all).toContain("after: structured output");
-  });
-
-  it("emits before/after lines when only after_text is present", () => {
-    const frames = demoScriptFor(
-      makeSkill({ slug: "lopsided", before_text: null, after_text: "only after" }),
-      "demo/marketplace",
-      0,
-    );
-    const all = frames.map((f) => f.text).join("\n");
-    expect(all).toContain("before: unstructured request");
-    expect(all).toContain("after: only after");
-  });
-
-  it("falls back to description when tagline is empty", () => {
-    const frames = demoScriptFor(
-      makeSkill({
-        slug: "no-tagline",
-        tagline: "   ",
-        description: "Plain description here.",
-      }),
-      "demo/marketplace",
-      0,
-    );
-    const intent = frames.find((f) => f.text.startsWith("intent: "));
-    expect(intent?.text).toBe("intent: Plain description here.");
-  });
-
-  it("truncates very long intent text to 96 chars", () => {
-    const long = "x".repeat(200);
-    const frames = demoScriptFor(
-      makeSkill({ slug: "long", tagline: long }),
-      "demo/marketplace",
-      0,
-    );
-    const intent = frames.find((f) => f.text.startsWith("intent: "));
-    expect(intent).toBeDefined();
-    // "intent: " (8) + content (<=96) + "..." (3) = <=107
-    expect(intent!.text.length).toBeLessThanOrEqual(8 + 96);
-    expect(intent!.text.endsWith("...")).toBe(true);
+    const all = scenarios[0].map((f) => f.text).join("\n");
+    expect(all).toContain("auto-selected research workflow");
   });
 });
 
@@ -192,22 +168,11 @@ describe("sampleTaskFor", () => {
 });
 
 describe("DemoFrame defaults", () => {
-  it("exposes default per-kind typing speeds", () => {
+  it("exposes default per-kind typing speeds including user", () => {
     expect(DEFAULT_SPEED_MS.prompt).toBeGreaterThan(0);
+    expect(DEFAULT_SPEED_MS.user).toBeGreaterThan(0);
     expect(DEFAULT_SPEED_MS.response).toBeGreaterThan(0);
     expect(DEFAULT_SPEED_MS.thinking).toBeGreaterThan(0);
-  });
-
-  it("frames declare a kind from the allowed set", () => {
-    const frames: DemoFrame[] = demoScriptFor(
-      makeSkill({ slug: "superpowers", name: "Superpowers" }),
-      SUPERPOWERS_MARKETPLACE,
-      0,
-    );
-    const kinds = new Set(frames.map((f) => f.kind));
-    for (const k of kinds) {
-      expect(["prompt", "response", "thinking"]).toContain(k);
-    }
   });
 });
 
