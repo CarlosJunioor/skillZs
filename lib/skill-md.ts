@@ -27,3 +27,46 @@ export function truncateTerminal(value: string, width = TERMINAL_WIDTH): string 
   const clean = value.trim();
   return clean.length > width ? `${clean.slice(0, width - 1).trimEnd()}…` : clean;
 }
+
+/** Candidate user-request phrases from a skill's frontmatter `description`. */
+export function extractTriggers(description: string | null | undefined): string[] {
+  if (!description) return [];
+  const out: string[] = [];
+
+  // 1. Quoted phrases ('grill me', "red-green-refactor") — most direct.
+  for (const m of description.matchAll(/['"]([^'"]{2,48})['"]/g)) {
+    out.push(m[1]);
+  }
+
+  const useWhen = description.match(/use when\s+(.*)/i);
+  if (useWhen) {
+    // Clause boundaries are commas. Do NOT split on a bare "or" — it appears
+    // inside phrases like "feature or bugfix" and would shred them.
+    const clauses = useWhen[1]
+      .split(/,/)
+      .map((c) => c.trim())
+      .filter(Boolean);
+    // 2. "wants to X" clauses -> X.
+    let matchedWants = false;
+    for (const c of clauses) {
+      const wants = c.match(/wants?\s+to\s+(.*)/i);
+      if (wants) {
+        out.push(wants[1]);
+        matchedWants = true;
+      }
+    }
+    // 3. Last resort: the first clause verbatim, only when nothing better matched.
+    if (!matchedWants && clauses[0]) out.push(clauses[0]);
+  }
+
+  const seen = new Set<string>();
+  const cleaned: string[] = [];
+  for (const t of out) {
+    const phrase = t.replace(/[.'"]+$/, "").replace(/\s+/g, " ").trim();
+    if (phrase.length >= 2 && !seen.has(phrase.toLowerCase())) {
+      seen.add(phrase.toLowerCase());
+      cleaned.push(phrase);
+    }
+  }
+  return cleaned.slice(0, 6);
+}

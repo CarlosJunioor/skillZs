@@ -21,3 +21,33 @@ describe("truncateTerminal", () => {
     expect(out.endsWith("…")).toBe(true);
   });
 });
+
+import { extractTriggers } from "../lib/skill-md";
+
+describe("extractTriggers", () => {
+  it("returns [] for empty description", () => {
+    expect(extractTriggers(null)).toEqual([]);
+    expect(extractTriggers("")).toEqual([]);
+  });
+
+  it("prefers quoted phrases", () => {
+    const triggers = extractTriggers(
+      "Use when user wants to stress-test a plan, or mentions 'grill me'.",
+    );
+    expect(triggers[0]).toBe("grill me");
+  });
+
+  it("falls back to 'wants to X' clauses", () => {
+    const triggers = extractTriggers(
+      "Use when the user wants to review a pull request before merge.",
+    );
+    expect(triggers).toContain("review a pull request before merge");
+  });
+
+  it("falls back to the 'Use when X' clause when there is no 'wants to'", () => {
+    const triggers = extractTriggers(
+      "Use when implementing any feature or bugfix, before writing code.",
+    );
+    expect(triggers[0]).toBe("implementing any feature or bugfix");
+  });
+});
