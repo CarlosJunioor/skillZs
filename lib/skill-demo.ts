@@ -1,14 +1,14 @@
 import { categoryLabel } from "@/lib/format";
 import type { SkillStats } from "@/lib/types";
 
-export type { DemoFrameKind, DemoFrame } from "./skill-demo-types";
 import {
   DEFAULT_SPEED_MS,
   LOOP_PAUSE_MS,
   type DemoFrame,
   type DemoFrameKind,
 } from "./skill-demo-types";
-export { DEFAULT_SPEED_MS, LOOP_PAUSE_MS };
+
+export { DEFAULT_SPEED_MS, LOOP_PAUSE_MS, type DemoFrame, type DemoFrameKind };
 
 type SlugScript = (skill: SkillStats, marketplace: string, loopIndex: number) => DemoFrame[];
 
