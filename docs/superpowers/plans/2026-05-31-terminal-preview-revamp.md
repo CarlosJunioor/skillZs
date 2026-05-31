@@ -73,14 +73,14 @@ export const LOOP_PAUSE_MS = 2500;
 In `lib/skill-demo.ts`, replace the existing block (lines 4-19: the `DemoFrameKind`/`DemoFrame`/`DEFAULT_SPEED_MS`/`LOOP_PAUSE_MS` declarations) with:
 
 ```ts
-export type { DemoFrameKind, DemoFrame } from "./skill-demo-types";
 import {
   DEFAULT_SPEED_MS,
   LOOP_PAUSE_MS,
   type DemoFrame,
   type DemoFrameKind,
 } from "./skill-demo-types";
-export { DEFAULT_SPEED_MS, LOOP_PAUSE_MS };
+
+export { DEFAULT_SPEED_MS, LOOP_PAUSE_MS, type DemoFrame, type DemoFrameKind };
 ```
 
 Leave the rest of the file (`SlugScript`, `SUPERPOWERS_*`, `demoScriptFor`, `superpowersScript`, `categoryScript`, etc.) unchanged for now.
@@ -256,17 +256,23 @@ export function extractTriggers(description: string | null | undefined): string[
 
   const useWhen = description.match(/use when\s+(.*)/i);
   if (useWhen) {
+    // Clause boundaries are commas. Do NOT split on a bare "or" — it appears
+    // inside phrases like "feature or bugfix" and would shred them.
     const clauses = useWhen[1]
-      .split(/,|\bor\b/i)
+      .split(/,/)
       .map((c) => c.trim())
       .filter(Boolean);
     // 2. "wants to X" clauses -> X.
+    let matchedWants = false;
     for (const c of clauses) {
       const wants = c.match(/wants?\s+to\s+(.*)/i);
-      if (wants) out.push(wants[1]);
+      if (wants) {
+        out.push(wants[1]);
+        matchedWants = true;
+      }
     }
-    // 3. The first clause verbatim as a last resort.
-    if (clauses[0]) out.push(clauses[0]);
+    // 3. Last resort: the first clause verbatim, only when nothing better matched.
+    if (!matchedWants && clauses[0]) out.push(clauses[0]);
   }
 
   const seen = new Set<string>();
@@ -637,7 +643,7 @@ description: Use when the user wants to stress-test a plan, or mentions 'grill m
 
 ## Overview
 
-Interview the user relentlessly until you reach shared understanding.
+Interview the user relentlessly until shared understanding.
 
 ## The Process
 
@@ -661,7 +667,7 @@ describe("readSkillDoc", () => {
     expect(doc).not.toBeNull();
     expect(doc!.triggers[0]).toBe("grill me");
     expect(doc!.essence).toBe(
-      "Interview the user relentlessly until you reach shared understanding.",
+      "Interview the user relentlessly until shared understanding.",
     );
     expect(doc!.steps).toContain("Ask one question at a time");
   });
@@ -817,8 +823,10 @@ Then add these functions (place them above `categoryScript`):
 ```ts
 /** Turn a parsed doc + skill into a believable first-person user request. */
 export function synthesizeUserAsk(doc: SkillDoc, skill: SkillStats): string {
+  // Quoted/verbatim triggers keep their authored case ('grill me', 'review this PR').
   const trigger = doc.triggers[0];
-  if (trigger) return truncateTerminalText(trigger.toLowerCase());
+  if (trigger) return truncateTerminalText(trigger);
+  // Taglines are Title Case value props — lowercase them to read like a user line.
   if (skill.tagline?.trim()) return truncateTerminalText(skill.tagline.trim().toLowerCase());
   return `apply ${skill.name} to this task`;
 }
@@ -879,11 +887,24 @@ git commit -m "feat(skill-demo): add user-ask synthesis and derived scenario bui
 
 - [ ] **Step 1: Write the failing test**
 
-In `tests/skill-demo.test.ts`, replace the two existing describe blocks `describe("demoScriptFor: superpowers", ...)` and `describe("demoScriptFor: category fallback", ...)` with:
+First, **replace the entire import header** of `tests/skill-demo.test.ts` (every `import` line at the top — the vitest import, the `../lib/skill-demo` import, any `../lib/skill-md` import added in Task 7, and the `../lib/types` import) with this single consolidated block, so no import is left unused after the rewrite (`demoScriptFor` and `type DemoFrame` are no longer used):
 
 ```ts
-import { buildDemoScenarios } from "../lib/skill-demo";
+import { describe, expect, it } from "vitest";
+import {
+  DEFAULT_SPEED_MS,
+  buildDemoScenarios,
+  buildDerivedScenario,
+  sampleTaskFor,
+  synthesizeUserAsk,
+} from "../lib/skill-demo";
+import { readSkillDoc } from "../lib/skill-md";
+import type { Category, SkillStats } from "../lib/types";
+```
 
+Then, in the same file, replace the two existing describe blocks `describe("demoScriptFor: superpowers", ...)` and `describe("demoScriptFor: category fallback", ...)` with:
+
+```ts
 const READELESS = null;
 
 describe("buildDemoScenarios: superpowers", () => {
