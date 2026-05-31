@@ -210,6 +210,101 @@ h1, h2, h3, h4, .display { font-family: var(--font-display); letter-spacing: -0.
   box-shadow: 3px 3px 0 var(--shadow-color);
 }
 
+/* Matrix terminal preview used on skill detail pages. */
+.terminal-preview {
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(200, 195, 70, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 195, 70, 0.04) 1px, transparent 1px),
+    #050505;
+  background-size: 22px 22px;
+  color: #D4FF75;
+  box-shadow: 5px 5px 0 var(--shadow-color);
+}
+
+.terminal-preview__chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-bottom: 2px solid rgba(212, 255, 117, 0.42);
+  background: rgba(10, 26, 18, 0.92);
+  color: rgba(212, 255, 117, 0.72);
+  font-family: var(--font-type);
+  font-size: 12px;
+}
+
+.terminal-preview__dot {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #D4FF75;
+  background: #1A1A1A;
+  box-shadow: 1px 1px 0 rgba(212, 255, 117, 0.52);
+}
+
+.terminal-preview__body {
+  position: relative;
+  margin: 0;
+  min-height: 360px;
+  padding: 18px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.75;
+  text-shadow: 0 0 8px rgba(212, 255, 117, 0.38);
+}
+
+.terminal-preview__body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(212, 255, 117, 0.05) 50%, transparent 100%);
+  background-size: 100% 7px;
+  mix-blend-mode: screen;
+}
+
+.terminal-preview__line {
+  display: block;
+  color: rgba(212, 255, 117, 0.82);
+}
+
+.terminal-preview__line--prompt {
+  color: rgba(212, 255, 117, 0.92); /* slash-commands read as CLI/system */
+}
+
+.terminal-preview__line--user {
+  color: #FFFFFF; /* the human turn: brightest, weightiest */
+  font-weight: 600;
+}
+
+.terminal-preview__line--thinking {
+  color: rgba(212, 255, 117, 0.6);
+  font-style: italic;
+}
+
+.terminal-preview__cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  background: #D4FF75;
+  box-shadow: 0 0 6px rgba(212, 255, 117, 0.7);
+  animation: terminal-blink 1s steps(2, end) infinite;
+}
+
+@keyframes terminal-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-preview__cursor { animation: none; opacity: 1; }
+}
+
 /* Underline graffiti scribble */
 .scribble {
   background-image: linear-gradient(transparent 60%, var(--color-olive) 60%, var(--color-olive) 88%, transparent 88%);
