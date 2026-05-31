@@ -195,3 +195,38 @@ export function extractExamples(body: string, maxExamples = 3, maxLines = 8): Sk
   }
   return out;
 }
+
+export interface SkillDoc {
+  triggers: string[];
+  essence: string | null;
+  steps: string[];
+  terminalLines: string[];
+  examples: SkillExample[];
+}
+
+/** Parse frontmatter via gray-matter, tolerating malformed YAML. */
+function readFrontmatter(md: string): { description: string | null; body: string } {
+  try {
+    const { data, content } = matter(md);
+    const description = typeof data.description === "string" ? data.description : null;
+    return { description, body: content };
+  } catch {
+    return { description: null, body: md };
+  }
+}
+
+/** Read a skill's SKILL.md into structured signals, or null when unusable. */
+export function readSkillDoc(readme: string | null | undefined): SkillDoc | null {
+  if (!readme || !readme.trim()) return null;
+  const { description, body } = readFrontmatter(readme);
+  const doc: SkillDoc = {
+    triggers: extractTriggers(description),
+    essence: extractEssence(body),
+    steps: extractSteps(body),
+    terminalLines: extractTerminalLines(body),
+    examples: extractExamples(body),
+  };
+  const hasBody =
+    doc.examples.length > 0 || doc.terminalLines.length > 0 || doc.steps.length > 0;
+  return hasBody ? doc : null;
+}

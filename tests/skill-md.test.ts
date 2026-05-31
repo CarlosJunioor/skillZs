@@ -171,3 +171,48 @@ describe("extractExamples", () => {
     expect(examples[0].lines).not.toContain("test('rejects empty email', () => {});");
   });
 });
+
+import { readSkillDoc } from "../lib/skill-md";
+
+const FULL_SKILL = `---
+name: grill-me
+description: Use when the user wants to stress-test a plan, or mentions 'grill me'.
+---
+
+# Grill Me
+
+## Overview
+
+Interview the user relentlessly until shared understanding.
+
+## The Process
+
+1. Ask one question at a time
+2. Resolve each branch of the decision tree
+3. Provide your recommended answer
+`;
+
+describe("readSkillDoc", () => {
+  it("returns null for empty input", () => {
+    expect(readSkillDoc(null)).toBeNull();
+    expect(readSkillDoc("   ")).toBeNull();
+  });
+
+  it("returns null when there is no usable body (no steps/terminal/examples)", () => {
+    expect(readSkillDoc("---\nname: x\ndescription: Use when y.\n---\n\nJust prose.\n")).toBeNull();
+  });
+
+  it("parses frontmatter, triggers, essence and steps", () => {
+    const doc = readSkillDoc(FULL_SKILL);
+    expect(doc).not.toBeNull();
+    expect(doc!.triggers[0]).toBe("grill me");
+    expect(doc!.essence).toBe(
+      "Interview the user relentlessly until shared understanding.",
+    );
+    expect(doc!.steps).toContain("Ask one question at a time");
+  });
+
+  it("does not throw on malformed frontmatter", () => {
+    expect(() => readSkillDoc("---\n: : :\n---\nbody\n")).not.toThrow();
+  });
+});
