@@ -227,3 +227,43 @@ describe("buildDerivedScenario", () => {
     expect(frames.some((f) => f.kind === "response" && f.text.includes("Ask one question at a time"))).toBe(true);
   });
 });
+
+describe("buildDemoScenarios: body preference", () => {
+  // A skill with a real method but also a stray, unrelated fenced code block.
+  const readme = `---
+name: debug-it
+description: Use when encountering any bug.
+---
+
+# Debug It
+
+## Overview
+
+Find the root cause before fixing.
+
+## The Four Phases
+
+1. Read the error message carefully
+2. Reproduce the failure consistently
+3. Form a single hypothesis
+
+## Aside
+
+\`\`\`bash
+echo "unrelated config dump"
+export FOO=bar
+cat /tmp/whatever
+\`\`\`
+`;
+
+  it("prefers the skill's method steps over an unrelated code block", () => {
+    const scenarios = buildDemoScenarios(
+      makeSkill({ slug: "debug-it", name: "Debug It", category: "coding" }),
+      "someone/skills",
+      readme,
+    );
+    const all = scenarios.flat().map((f) => f.text).join("\n");
+    expect(all).toContain("Read the error message carefully");
+    expect(all).not.toContain("unrelated config dump");
+  });
+});
