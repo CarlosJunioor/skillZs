@@ -8,6 +8,8 @@ import { VoteButton } from "@/components/vote-button";
 import { SkillRow } from "@/components/skill-row";
 import { InstallPill } from "@/components/install-pill";
 import { SkillContents } from "@/components/skill-contents";
+import { SkillTerminalPreview } from "@/components/skill-terminal-preview";
+import { buildDemoScenarios } from "@/lib/skill-demo";
 import { getPluginConfig, resolveMarketplace } from "@/lib/plugin-config";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import {
@@ -71,6 +73,7 @@ export default async function SkillPage({
   const categoryCrumb = categoryTitle(skill.category);
   const pluginConfig = getPluginConfig(skill.slug);
   const marketplace = resolveMarketplace(skill.slug, skill.source_repo);
+  const scenarios = buildDemoScenarios(skill, marketplace, readme);
 
   return (
     <article className="pt-6">
@@ -162,6 +165,8 @@ export default async function SkillPage({
       {pluginConfig && (
         <SkillContents pluginSlug={skill.slug} subSkills={pluginConfig.subSkills} />
       )}
+
+      <SkillTerminalPreview scenarios={scenarios} slug={skill.slug} />
 
       {/* README */}
       {readme && (
