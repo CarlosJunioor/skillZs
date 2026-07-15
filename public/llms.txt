@@ -6,6 +6,7 @@
 
 - [Agent skills catalog](https://skillzs.dev/): Discover the most-installed AI agent skills.
 - [Browse all agent skills](https://skillzs.dev/browse): Search the full catalog and compare all-time, trending, and hot skills.
+- [find-agent-skills workflow](https://skillzs.dev/skills/carlosjunioor/skillzs/find-agent-skills): Install the first-party skill for finding, comparing, and safely evaluating Agent Skills.
 - [Agent skills guides](https://skillzs.dev/guides): Learn how to create, install, compare, test, and secure portable agent skills.
 - [Agent Skills Ecosystem Report 2026](https://skillzs.dev/research/agent-skills-report-2026): Live top-500 analysis of catalog size, installs, source concentration, methodology, and creator lessons.
 - [Best Agent Skills](https://skillzs.dev/guides/best-agent-skills): Live all-time install rankings with transparent methodology, safety caveats, and selection criteria.
