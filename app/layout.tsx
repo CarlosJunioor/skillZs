@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bowlby_One_SC, DM_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { JsonLd } from "@/components/json-ld";
 import { Marquee } from "@/components/motion/marquee";
 import { MotionLink } from "@/components/motion/motion-link";
@@ -146,6 +147,7 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
