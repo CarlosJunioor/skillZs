@@ -58,12 +58,12 @@ export default function AboutPage() {
       </nav>
 
       <header className="border-b border-[#29313a] pb-10">
-        <div className="tag-font mb-5 text-xs uppercase tracking-[0.16em] text-[var(--color-grape)]">open source / visible methods / corrections welcome</div>
+        <div className="tag-font mb-5 text-xs uppercase tracking-[0.16em] text-[var(--color-grape)]">public source / visible methods / corrections welcome</div>
         <h1 className="display max-w-5xl text-5xl leading-[0.9] sm:text-7xl md:text-8xl">
           about<br /><span className="text-[var(--color-grape)]">skillZs.</span>
         </h1>
         <p className="type-font mt-8 max-w-3xl text-base leading-7 text-[var(--color-ink-soft)]">
-          skillZs is an open-source Agent Skills discovery and learning hub. It mirrors live ecosystem listings, ranks them with upstream install data rather than paid placement, links to original sources, publishes practical guides checked against primary documentation, and clearly separates available partner audit summaries from guarantees of safety.
+          skillZs is an Agent Skills discovery and learning hub. It mirrors live ecosystem listings, ranks them with upstream install data rather than paid placement, links to original sources, publishes practical guides checked against primary documentation, and clearly separates available partner audit summaries from guarantees of safety.
         </p>
       </header>
 
