@@ -11,6 +11,7 @@ export const revalidate = 3600;
 const SITEMAP_SIZE = 50_000;
 const API_PAGE_SIZE = 500;
 const CONTENT_UPDATED = new Date("2026-07-15T00:00:00.000Z");
+const FIRST_PARTY_SKILL_PATH = "/skills/carlosjunioor/skillzs/find-agent-skills";
 
 async function catalogTotalOrZero(): Promise<number> {
   try {
@@ -143,6 +144,12 @@ export default async function sitemap({
       changeFrequency: "monthly",
       priority: 0.9,
     },
+    {
+      url: absoluteUrl(FIRST_PARTY_SKILL_PATH),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
     ...categoryRoutes.map((category) => ({
       url: absoluteUrl(category.path),
       changeFrequency: "daily" as const,
@@ -158,7 +165,7 @@ export default async function sitemap({
   return [
     ...staticRoutes,
     ...skills
-      .filter((skill) => !skill.isDuplicate)
+      .filter((skill) => !skill.isDuplicate && catalogSkillPath(skill).toLowerCase() !== FIRST_PARTY_SKILL_PATH)
       .map((skill) => ({
         url: absoluteUrl(catalogSkillPath(skill)),
         changeFrequency: "weekly" as const,

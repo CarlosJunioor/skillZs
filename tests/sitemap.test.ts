@@ -48,9 +48,23 @@ describe("catalog sitemap", () => {
       expect.stringMatching(/\/guides\/how-to-install-agent-skills$/),
       expect.stringMatching(/\/guides\/agent-skills-vs-mcp$/),
       expect.stringMatching(/\/guides\/agent-skill-security$/),
+      expect.stringMatching(/\/skills\/carlosjunioor\/skillzs\/find-agent-skills$/),
       expect.stringMatching(/\/character\/matt-pocock$/),
     ]));
     expect(entries.some((entry) => entry.url.endsWith("/town"))).toBe(false);
     expect(mocks.listCatalogSkillPages).not.toHaveBeenCalled();
+  });
+
+  it("lists the first-party skill once when the upstream feed catches up", async () => {
+    mocks.getCatalogTotal.mockResolvedValue(1);
+    mocks.listCatalogSkillPages.mockResolvedValue([{
+      id: "CarlosJunioor/skillZs/find-agent-skills",
+      isDuplicate: false,
+    }]);
+
+    const entries = await sitemap({ id: Promise.resolve("0") });
+    const urls = entries.map((entry) => entry.url.toLowerCase());
+
+    expect(urls.filter((url) => url.endsWith("/skills/carlosjunioor/skillzs/find-agent-skills"))).toHaveLength(1);
   });
 });
