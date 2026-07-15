@@ -10,8 +10,26 @@ export const revalidate = 3600;
 const SITEMAP_SIZE = 50_000;
 const API_PAGE_SIZE = 500;
 
+async function catalogTotalOrZero(): Promise<number> {
+  try {
+    return await getCatalogTotal();
+  } catch (error) {
+    console.warn("sitemap catalog total unavailable:", error);
+    return 0;
+  }
+}
+
+async function catalogSkillsOrEmpty(startPage: number, pageCount: number) {
+  try {
+    return await listCatalogSkillPages(startPage, pageCount);
+  } catch (error) {
+    console.warn("sitemap catalog pages unavailable:", error);
+    return [];
+  }
+}
+
 export async function generateSitemaps() {
-  const total = await getCatalogTotal();
+  const total = await catalogTotalOrZero();
   return Array.from(
     { length: Math.max(1, Math.ceil(total / SITEMAP_SIZE)) },
     (_, id) => ({ id }),
@@ -26,15 +44,17 @@ export default async function sitemap({
   const sitemapId = Number(await id);
   if (!Number.isInteger(sitemapId) || sitemapId < 0) return [];
 
-  const total = await getCatalogTotal();
+  const total = await catalogTotalOrZero();
   const start = sitemapId * SITEMAP_SIZE;
   if (start >= total && sitemapId !== 0) return [];
 
   const itemCount = Math.min(SITEMAP_SIZE, Math.max(0, total - start));
-  const skills = await listCatalogSkillPages(
-    start / API_PAGE_SIZE,
-    Math.ceil(itemCount / API_PAGE_SIZE),
-  );
+  const skills = itemCount > 0
+    ? await catalogSkillsOrEmpty(
+      start / API_PAGE_SIZE,
+      Math.ceil(itemCount / API_PAGE_SIZE),
+    )
+    : [];
   const staticRoutes: MetadataRoute.Sitemap = sitemapId === 0 ? [
     {
       url: absoluteUrl("/"),
