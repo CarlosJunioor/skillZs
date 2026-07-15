@@ -44,6 +44,7 @@ describe("catalog sitemap", () => {
       expect.stringMatching(/\/research\/agent-skills-report-2026$/),
       expect.stringMatching(/\/guides\/best-agent-skills$/),
       expect.stringMatching(/\/guides\/agent-skills-directories$/),
+      expect.stringMatching(/\/guides\/what-are-agent-skills$/),
       expect.stringMatching(/\/guides\/how-to-create-agent-skills$/),
       expect.stringMatching(/\/guides\/how-to-publish-agent-skills$/),
       expect.stringMatching(/\/guides\/how-to-install-agent-skills$/),

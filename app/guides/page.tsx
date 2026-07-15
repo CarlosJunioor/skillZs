@@ -10,6 +10,12 @@ const description =
 
 const guides = [
   {
+    href: "/guides/what-are-agent-skills",
+    title: "What are Agent Skills?",
+    summary: "Understand SKILL.md, progressive loading, supported clients, examples, safety, and how skills differ from prompts and MCP.",
+    label: "start / 10 min",
+  },
+  {
     href: "/research/agent-skills-report-2026",
     title: "Agent Skills Ecosystem Report 2026",
     summary: "Analyze live catalog size, install concentration, leading sources, methodology, and creator lessons.",
@@ -151,7 +157,7 @@ export default function GuidesPage() {
         <section>
           <h2>What can you learn about agent skills?</h2>
           <p>
-            These guides cover the complete lifecycle: discovery, format and trigger design, installation, compatibility, security review, testing, and publishing. Start with the <MotionLink href="/guides/best-agent-skills">live Agent Skills rankings</MotionLink>, use the <MotionLink href="/guides/how-to-create-agent-skills">SKILL.md creation guide</MotionLink> when building a workflow, follow the <MotionLink href="/guides/how-to-publish-agent-skills">publishing guide</MotionLink> when it is ready to share, and read the <MotionLink href="/guides/agent-skill-security">security checklist</MotionLink> before a skill can run tools or scripts.
+            These guides cover the complete lifecycle: discovery, format and trigger design, installation, compatibility, security review, testing, and publishing. Begin with <MotionLink href="/guides/what-are-agent-skills">what Agent Skills are</MotionLink>, compare the <MotionLink href="/guides/best-agent-skills">live Agent Skills rankings</MotionLink>, use the <MotionLink href="/guides/how-to-create-agent-skills">SKILL.md creation guide</MotionLink> when building a workflow, follow the <MotionLink href="/guides/how-to-publish-agent-skills">publishing guide</MotionLink> when it is ready to share, and read the <MotionLink href="/guides/agent-skill-security">security checklist</MotionLink> before a skill can run tools or scripts.
           </p>
         </section>
         <section>
