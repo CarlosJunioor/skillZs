@@ -135,6 +135,7 @@ export default async function RootLayout({
             <div>
               <div className="tag-font text-[var(--color-grape)] text-xs uppercase tracking-[0.16em] mb-3">status</div>
               <p className="type-font text-sm"><span className="text-[var(--color-grape)]">●</span> catalog sync active</p>
+              <p className="type-font mt-2 text-sm"><MotionLink href="/policies" className="hover:text-[var(--color-grape)]">&rarr; policies / security</MotionLink></p>
               <p className="type-font text-xs mt-4 text-[var(--color-rust)]">&copy; {new Date().getFullYear()} &middot; open skill index</p>
             </div>
           </div>

@@ -30,6 +30,7 @@ describe("catalog sitemap", () => {
     expect(entries.map((entry) => entry.url)).toEqual(expect.arrayContaining([
       expect.stringMatching(/\/$/),
       expect.stringMatching(/\/browse$/),
+      expect.stringMatching(/\/policies$/),
     ]));
     expect(mocks.listCatalogSkillPages).not.toHaveBeenCalled();
   });

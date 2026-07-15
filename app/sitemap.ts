@@ -71,6 +71,11 @@ export default async function sitemap({
       changeFrequency: "hourly",
       priority: 0.9,
     },
+    {
+      url: absoluteUrl("/policies"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
     ...categoryRoutes.map((category) => ({
       url: absoluteUrl(category.path),
       changeFrequency: "daily" as const,
