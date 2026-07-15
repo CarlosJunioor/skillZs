@@ -10,6 +10,7 @@
 - [Agent skills guides](https://skillzs.dev/guides): Learn how to create, install, compare, test, and secure portable agent skills.
 - [Agent Skills Ecosystem Report 2026](https://skillzs.dev/research/agent-skills-report-2026): Live top-500 analysis of catalog size, installs, source concentration, methodology, and creator lessons.
 - [Best Agent Skills](https://skillzs.dev/guides/best-agent-skills): Live all-time install rankings with transparent methodology, safety caveats, and selection criteria.
+- [Agent Skills directories compared](https://skillzs.dev/guides/agent-skills-directories): Compare major directories by discovery, ranking, source evidence, security signals, and submission paths.
 - [How to create an agent skill](https://skillzs.dev/guides/how-to-create-agent-skills): A complete SKILL.md guide with a working example, testing checklist, publishing advice, and official references.
 - [How to publish an Agent Skill](https://skillzs.dev/guides/how-to-publish-agent-skills): Publish from GitHub, test the public install path, become eligible for ecosystem discovery, and document trust signals.
 - [How to install agent skills](https://skillzs.dev/guides/how-to-install-agent-skills): Client directories, safe source review, activation tests, updates, and removal.
