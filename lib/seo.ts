@@ -112,7 +112,12 @@ export function buildPageMetadata({
   type?: "website" | "article";
   noIndex?: boolean;
 }): Metadata {
-  const cleanTitle = title.length <= 50 ? title : `${title.slice(0, 47).trimEnd()}...`;
+  const contextualTitle = noIndex || title.length >= 21
+    ? title
+    : `${title} - Agent Skills Guide`;
+  const cleanTitle = contextualTitle.length <= 50
+    ? contextualTitle
+    : `${contextualTitle.slice(0, 47).trimEnd()}...`;
   const initialDescription = seoDescription(description);
   const cleanDescription = initialDescription.length >= 70
     ? initialDescription

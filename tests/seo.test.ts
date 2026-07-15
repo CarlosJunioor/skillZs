@@ -88,6 +88,18 @@ describe("seo helpers", () => {
     expect(String(metadata.title)).toHaveLength(50);
   });
 
+  it("expands short indexable titles for search results", () => {
+    const metadata = buildPageMetadata({
+      title: "xdrop agent skill",
+      description: "Install and inspect the xdrop agent skill, including its source, instructions, and compatibility details.",
+      path: "/skills/example/xdrop",
+    });
+    const renderedTitle = `${metadata.title} | skillZs`;
+
+    expect(renderedTitle.length).toBeGreaterThanOrEqual(30);
+    expect(renderedTitle.length).toBeLessThanOrEqual(60);
+  });
+
   it("derives skill descriptions and images from the best available fields", () => {
     expect(skillDescription(skill)).toBe(
       "Plan before coding. Turns a rough prompt into a tested implementation plan.",
