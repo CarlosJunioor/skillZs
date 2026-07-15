@@ -1,5 +1,7 @@
 # skillZs
 
+[![skills.sh](https://skills.sh/b/CarlosJunioor/skillZs)](https://skills.sh/CarlosJunioor/skillZs/find-agent-skills)
+
 Image-free discovery index for reusable AI agent skills. The catalog mirrors the live
 skills.sh ecosystem with install rankings, search, lightweight tags, full `SKILL.md`
 manuals, and security-audit results.
