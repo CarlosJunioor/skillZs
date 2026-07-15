@@ -127,6 +127,12 @@ export default async function sitemap({
       priority: 0.9,
     },
     {
+      url: absoluteUrl("/guides/agent-skills-directories"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: absoluteUrl("/guides/how-to-install-agent-skills"),
       lastModified: CONTENT_UPDATED,
       changeFrequency: "monthly",

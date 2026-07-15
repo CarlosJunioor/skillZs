@@ -22,6 +22,12 @@ const guides = [
     label: "rankings / live",
   },
   {
+    href: "/guides/agent-skills-directories",
+    title: "Agent Skills directories compared",
+    summary: "Compare discovery, ranking, source evidence, security signals, installation, and submission paths.",
+    label: "compare / 10 min",
+  },
+  {
     href: "/guides/how-to-create-agent-skills",
     title: "How to create an agent skill",
     summary: "Write a valid SKILL.md, improve activation, test real outcomes, and publish a portable skill.",
