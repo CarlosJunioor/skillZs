@@ -121,6 +121,12 @@ export default async function sitemap({
       priority: 0.9,
     },
     {
+      url: absoluteUrl("/guides/skill-md-vs-agents-md-vs-claude-md"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: absoluteUrl("/guides/how-to-publish-agent-skills"),
       lastModified: CONTENT_UPDATED,
       changeFrequency: "monthly",

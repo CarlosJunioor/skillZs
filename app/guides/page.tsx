@@ -16,6 +16,12 @@ const guides = [
     label: "start / 10 min",
   },
   {
+    href: "/guides/skill-md-vs-agents-md-vs-claude-md",
+    title: "SKILL.md vs AGENTS.md vs CLAUDE.md",
+    summary: "Choose between on-demand workflows, cross-agent repository guidance, and persistent Claude Code context.",
+    label: "compare / 9 min",
+  },
+  {
     href: "/research/agent-skills-report-2026",
     title: "Agent Skills Ecosystem Report 2026",
     summary: "Analyze live catalog size, install concentration, leading sources, methodology, and creator lessons.",

@@ -174,7 +174,7 @@ description: Researches a focused question and writes a cited brief. Use when th
             </table>
           </div>
           <p>
-            Use a skill for repeatable know-how and MCP for standardized connectivity. A skill can instruct an agent how to use an MCP tool safely. Read the <MotionLink href="/guides/agent-skills-vs-mcp">Agent Skills versus MCP guide</MotionLink> for architecture and security boundaries.
+            Use a skill for repeatable know-how and MCP for standardized connectivity. A skill can instruct an agent how to use an MCP tool safely. Read the <MotionLink href="/guides/agent-skills-vs-mcp">Agent Skills versus MCP guide</MotionLink> for architecture and security boundaries, or compare <MotionLink href="/guides/skill-md-vs-agents-md-vs-claude-md">SKILL.md, AGENTS.md, and CLAUDE.md</MotionLink> when organizing repository instructions.
           </p>
         </section>
 
