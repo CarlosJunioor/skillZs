@@ -8,7 +8,7 @@ describe("SkillZsLogo", () => {
   it("renders the static wordmark at the requested size", () => {
     const html = renderToString(<SkillZsLogo size="sm" />);
 
-    expect(html).toContain('src="/skillzs-wordmark.png"');
+    expect(html).toContain(encodeURIComponent("/skillzs-wordmark.png"));
     expect(html).toContain('alt="skillZs"');
     expect(html).toContain('width="780"');
     expect(html).toContain('height="329"');

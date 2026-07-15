@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { MotionLink } from "@/components/motion/motion-link";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import type { SkillStats } from "@/lib/types";
@@ -50,11 +51,11 @@ export function SkillCard({ skill, size = "md", isNew, className }: Props) {
       >
         <div className={cn("relative w-full overflow-hidden grain", visualHeight)}>
           {visual ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={visual}
               alt={skill.tagline ?? skill.name}
-              loading="lazy"
+              fill
+              sizes={size === "lg" ? "300px" : size === "sm" ? "220px" : "260px"}
               className="w-full h-full object-cover"
             />
           ) : (

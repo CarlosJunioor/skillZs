@@ -76,7 +76,11 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
             priorHash !== newHash &&
             priorDiptychStatus === "done";
 
-          const attribution = await attributeSkillToCharacter(sb, parsed.meta);
+          const attribution = await attributeSkillToCharacter(
+            sb,
+            parsed.meta,
+            `${seed.owner}/${seed.repo}`,
+          );
 
           const { error } = await sb.from("skills").upsert(
             {

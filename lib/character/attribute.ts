@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { characterForSource } from "./seed";
 
-export type MatchReason = "gh_handle" | "x_handle";
+export type MatchReason = "gh_handle" | "x_handle" | "source_repo";
 
 export interface Attribution {
   character_id: string | null;
@@ -35,20 +36,24 @@ export function normaliseHandle(input: string | null | undefined): string {
 }
 
 /**
- * Try to attribute a parsed skill to a character row by matching its `author`
- * (or `author_handle`) frontmatter against characters.gh_handle / .x_handle.
+ * Attribute a parsed skill by its `author`/`author_handle` frontmatter, then
+ * fall back to the operator-curated source repository map.
  *
  * Case-insensitive. Returns null match when no candidate handle is present.
  */
 export async function attributeSkillToCharacter(
   sb: SupabaseClient,
   meta: Record<string, unknown>,
+  sourceRepo?: string,
 ): Promise<Attribution> {
   const raw =
     (typeof meta.author === "string" ? meta.author : null) ??
     (typeof meta.author_handle === "string" ? meta.author_handle : null) ??
     "";
-  const norm = normaliseHandle(raw);
+  const authoredHandle = normaliseHandle(raw);
+  const sourceCharacter = sourceRepo ? characterForSource(sourceRepo) : null;
+  const sourceHandle = normaliseHandle(sourceCharacter?.gh_handle ?? sourceCharacter?.x_handle);
+  const norm = authoredHandle || sourceHandle;
   if (!norm) return { character_id: null, match_reason: null };
 
   // The character roster is a small, operator-curated set, so fetch it whole and
@@ -67,10 +72,10 @@ export async function attributeSkillToCharacter(
   const rows = data as Array<{ id: string; gh_handle: string | null; x_handle: string | null }>;
   for (const row of rows) {
     if ((row.gh_handle ?? "").toLowerCase() === norm) {
-      return { character_id: row.id, match_reason: "gh_handle" };
+      return { character_id: row.id, match_reason: authoredHandle ? "gh_handle" : "source_repo" };
     }
     if ((row.x_handle ?? "").toLowerCase() === norm) {
-      return { character_id: row.id, match_reason: "x_handle" };
+      return { character_id: row.id, match_reason: authoredHandle ? "x_handle" : "source_repo" };
     }
   }
   return { character_id: null, match_reason: null };

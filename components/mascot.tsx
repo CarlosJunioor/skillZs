@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -16,10 +17,11 @@ interface Props {
  */
 export function Mascot({ height = 320, className, tilt = 0, alt = "skillZs mascot" }: Props) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src="/mascot.png"
       alt={alt}
+      width={1254}
+      height={1254}
       style={{
         height,
         width: "auto",

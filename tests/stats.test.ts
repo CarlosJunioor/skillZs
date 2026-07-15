@@ -31,6 +31,7 @@ import {
   fetchByCategory,
   fetchNew,
   fetchReadme,
+  fetchSitemapCharacters,
   fetchSitemapSkills,
   fetchSkillBySlug,
   fetchTrending,
@@ -245,11 +246,25 @@ describe("stats queries", () => {
     ]);
   });
 
+  it("fetchSitemapCharacters reads public creator slugs", async () => {
+    const rows = [{ slug: "matt-pocock" }, { slug: "zeke" }];
+    const { client, calls } = createClient({ data: rows });
+    supabaseMock.client = client;
+
+    await expect(fetchSitemapCharacters()).resolves.toEqual(rows);
+    expect(calls).toEqual([
+      { method: "from", table: "characters" },
+      { method: "select", columns: "slug" },
+      { method: "order", column: "slug", options: { ascending: true } },
+    ]);
+  });
+
   it("throws Supabase errors instead of hiding them", async () => {
     const error = new Error("database unavailable");
     const { client } = createClient({ error });
     supabaseMock.client = client;
 
     await expect(fetchBrowse()).rejects.toThrow(error);
+    await expect(fetchSitemapCharacters()).rejects.toThrow(error);
   });
 });

@@ -100,6 +100,12 @@ describe("attributeSkillToCharacter", () => {
     expect(out).toEqual({ character_id: "c-2", match_reason: "x_handle" });
   });
 
+  it("falls back to the curated source repository when frontmatter has no author", async () => {
+    const sb = fakeClient([{ id: "c-matt", gh_handle: "mattpocockuk", x_handle: "mpocock1" }]);
+    const out = await attributeSkillToCharacter(sb, {}, "mattpocock/skills");
+    expect(out).toEqual({ character_id: "c-matt", match_reason: "source_repo" });
+  });
+
   it("falls back to meta.author_handle when author missing", async () => {
     const sb = fakeClient([{ id: "c-3", gh_handle: "ghuntley", x_handle: null }]);
     const out = await attributeSkillToCharacter(sb, { author_handle: "ghuntley" });

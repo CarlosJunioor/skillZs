@@ -14,7 +14,7 @@ describe("CharacterChip", () => {
     const html = renderToString(
       <CharacterChip slug="matt-pocock" name="Matt Pocock" avatarUrl="https://blob.test/avatars/matt-pocock.png" />,
     );
-    expect(html).toContain('src="https://blob.test/avatars/matt-pocock.png"');
+    expect(html).toContain(encodeURIComponent("https://blob.test/avatars/matt-pocock.png"));
     expect(html).toContain("Matt Pocock");
   });
 

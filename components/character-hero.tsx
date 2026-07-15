@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { MotionLink } from "@/components/motion/motion-link";
 import type { Character } from "@/lib/types";
 
@@ -19,10 +20,11 @@ export function CharacterHero({ character, heroUrl }: Props) {
     <section className="grid md:grid-cols-[260px_1fr] gap-6 mb-12">
       <div className="ink-frame relative w-full aspect-square overflow-hidden grain bg-[var(--color-mauve)]">
         {hero ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={hero}
             alt={character.name}
+            fill
+            sizes="(min-width: 768px) 260px, 100vw"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -35,7 +37,7 @@ export function CharacterHero({ character, heroUrl }: Props) {
       <div className="ink-frame p-6 md:p-8 bg-[var(--color-paper)] flex flex-col justify-between min-h-[260px]">
         <div>
           <span className="bubble text-xs mb-4 inline-block">
-            {character.kind === "zeke" ? "in-house" : "influencer"}
+            {character.kind === "zeke" ? "in-house" : "creator"}
           </span>
           <h1 className="display text-4xl md:text-6xl leading-[0.92] mb-3 break-words">
             <span className="drip">{character.name}</span>

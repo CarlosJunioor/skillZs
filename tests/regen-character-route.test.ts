@@ -116,8 +116,7 @@ describe("POST /api/regen/character/[slug]", () => {
     });
   });
 
-  it("resets building_status when ?asset=building is passed", async () => {
-    mocks.state.row = { slug: "zeke", avatar_status: "done" };
+  it("rejects the removed building asset", async () => {
     const res = await POST(
       new Request("https://example.test/api/regen/character/zeke?asset=building", {
         method: "POST",
@@ -125,12 +124,9 @@ describe("POST /api/regen/character/[slug]", () => {
       }),
       { params: Promise.resolve({ slug: "zeke" }) },
     );
-    expect(res.status).toBe(200);
-    expect(mocks.state.lastPayload).toEqual({
-      building_status: "pending",
-      building_error: null,
-      building_attempts: 0,
-    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "invalid asset" });
+    expect(mocks.state.lastPayload).toBeUndefined();
   });
 
   it("rejects an unknown asset value", async () => {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { MotionLink } from "@/components/motion/motion-link";
 
 interface Props {
@@ -19,11 +20,11 @@ export function CharacterChip({ slug, name, avatarUrl }: Props) {
       className="character-chip flex items-center gap-1.5 tag-font text-[var(--color-grape)] text-xs mt-0.5 truncate hover:underline"
     >
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={avatarUrl}
           alt=""
-          loading="lazy"
+          width={20}
+          height={20}
           className="w-5 h-5 rounded-full border border-[var(--color-ink)] object-cover"
         />
       ) : (

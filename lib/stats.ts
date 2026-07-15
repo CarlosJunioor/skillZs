@@ -3,7 +3,7 @@ import { supabaseAnon } from "./supabase/server";
 import type { Character, SkillStats, ActivityRow } from "./types";
 
 const CHARACTER_PUBLIC_COLUMNS =
-  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url, building_url";
+  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url";
 
 const STATS_COLUMNS =
   "id, slug, name, description, cover_url, diptych_url, tagline, before_text, after_text, category, repo_url, source_repo, github_stars, vote_count, use_count, hotness, first_seen, last_seen, character_id, character_slug, character_name, character_avatar_url";
@@ -186,6 +186,15 @@ export async function fetchCharacterBySlug(slug: string): Promise<Character | nu
   return (data as Character | null) ?? null;
 }
 
+export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>> {
+  const { data, error } = await supabaseAnon()
+    .from("characters")
+    .select("slug")
+    .order("slug", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Array<{ slug: string }>;
+}
+
 export async function fetchSkillsByCharacter(
   characterId: string,
   limit = 24,
@@ -198,33 +207,6 @@ export async function fetchSkillsByCharacter(
     .limit(limit);
   if (error) throw error;
   return (data ?? []) as SkillStats[];
-}
-
-/**
- * All characters for the /town map. Ordered by slug because created_at is not
- * in the anon column grant (operational column). The town layout JSON drives
- * visual placement, so the DB sort key is only for stable Map iteration.
- */
-export async function fetchCharactersForTown(): Promise<Character[]> {
-  const { data, error } = await supabaseAnon()
-    .from("characters")
-    .select(CHARACTER_PUBLIC_COLUMNS)
-    .order("slug", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Character[];
-}
-
-/**
- * Lightweight slug pull for sitemap.ts. created_at is service-role-only per
- * the column grant; use new Date() for lastModified at the call site.
- */
-export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>> {
-  const { data, error } = await supabaseAnon()
-    .from("characters")
-    .select("slug")
-    .order("slug", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Array<{ slug: string }>;
 }
 
 const ACTIVITY_PUBLIC_COLUMNS = [

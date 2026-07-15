@@ -58,7 +58,6 @@ function makeCharacter(over: Partial<Character> = {}): Character {
     x_handle: "mpocock1",
     site_url: "https://www.totaltypescript.com",
     avatar_url: "https://blob.test/avatars/matt-pocock.png",
-    building_url: null,
     ...over,
   };
 }
@@ -121,7 +120,7 @@ describe("CharacterPage", () => {
     expect(html).toContain("Matt Pocock");
     expect(html).toContain("TypeScript explainer");
     expect(html).toContain("Author of Total TypeScript.");
-    expect(html).toContain('src="https://blob.test/avatars/matt-pocock.png"');
+    expect(html).toContain(encodeURIComponent("https://blob.test/avatars/matt-pocock.png"));
     // React SSR inserts comment markers between adjacent text nodes, so
     // assert against the href + handle separately.
     expect(html).toContain('href="https://github.com/mattpocockuk"');
@@ -129,6 +128,9 @@ describe("CharacterPage", () => {
     expect(html).toContain('href="https://x.com/mpocock1"');
     expect(html).toContain("mpocock1");
     expect(html).toContain("count:2");
+    expect(html).toContain("how Matt builds agent skills");
+    expect(html).toContain("failure first");
+    expect(html).toContain('href="/guides/how-to-create-agent-skills#matt-pocock-method"');
   });
 
   it("falls back to the mauve placeholder when avatar_url is null", async () => {

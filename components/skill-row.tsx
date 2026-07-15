@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useSyncExternalStore } from "react";
 import { Button } from "@/components/motion/button";
 import { SkillCard } from "./skill-card";
@@ -54,11 +55,12 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
   return (
     <section className="mt-14 relative">
       {watermark && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src="/fisheye.png"
           alt=""
           aria-hidden
+          width={600}
+          height={600}
           className="hidden md:block absolute -right-32 top-0 w-[600px] h-[600px] object-contain pointer-events-none select-none z-0 rotate-[6deg] opacity-[0.08]"
         />
       )}
