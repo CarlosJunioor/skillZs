@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
+    "indexnow": "node scripts/submit-indexnow.mjs",
     "ingest": "tsx scripts/ingest-local.ts",
     "backfill:diptychs": "node scripts/backfill-diptychs.mjs",
     "backfill:avatars": "node scripts/backfill-avatars.mjs",
