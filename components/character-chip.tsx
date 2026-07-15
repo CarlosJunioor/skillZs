@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MotionLink } from "@/components/motion/motion-link";
 
 interface Props {
   slug: string;
@@ -13,7 +13,7 @@ interface Props {
  */
 export function CharacterChip({ slug, name, avatarUrl }: Props) {
   return (
-    <Link
+    <MotionLink
       href={`/character/${slug}`}
       aria-label={`See more from ${name}`}
       className="character-chip flex items-center gap-1.5 tag-font text-[var(--color-grape)] text-xs mt-0.5 truncate hover:underline"
@@ -33,6 +33,6 @@ export function CharacterChip({ slug, name, avatarUrl }: Props) {
         />
       )}
       <span className="truncate">{name}</span>
-    </Link>
+    </MotionLink>
   );
 }

@@ -27,7 +27,7 @@ vi.mock("../lib/stats", () => ({
   fetchCharacterBySlug: mocks.fetchCharacterBySlug,
 }));
 
-import TownPage, { generateMetadata } from "../app/page";
+import TownPage, { generateMetadata } from "../app/town/page";
 
 function character(slug: string, over: Partial<Character> = {}): Character {
   return {
@@ -71,7 +71,7 @@ describe("TownPage", () => {
     mocks.loadTownLayout.mockResolvedValue([tile("zeke"), tile("matt-pocock")]);
     const element = await TownPage({ searchParams: Promise.resolve({}) });
     const html = renderToString(element);
-    expect(html).toContain('href="/?building=zeke"');
+    expect(html).toContain('href="/town?building=zeke"');
   });
 
   it("renders the drawer in a Suspense boundary when searchParams.building is set", async () => {
@@ -87,13 +87,13 @@ describe("TownPage", () => {
     expect(html).toContain('href="/character/zeke"');
   });
 
-  it("redirects to / when ?building=unknown-slug", async () => {
+  it("redirects to /town when ?building=unknown-slug", async () => {
     mocks.loadTownLayout.mockResolvedValue([tile("zeke")]);
     mocks.fetchCharacterBySlug.mockResolvedValue(null);
     await expect(
       TownPage({ searchParams: Promise.resolve({ building: "ghost" }) }),
     ).rejects.toThrow("NEXT_REDIRECT");
-    expect(mocks.redirect).toHaveBeenCalledWith("/");
+    expect(mocks.redirect).toHaveBeenCalledWith("/town");
   });
 });
 
@@ -102,9 +102,9 @@ describe("TownPage generateMetadata", () => {
     mocks.fetchCharacterBySlug.mockReset();
   });
 
-  it("uses '/' as canonical when no drawer is open", async () => {
+  it("uses '/town' as canonical when no drawer is open", async () => {
     const meta = await generateMetadata({ searchParams: Promise.resolve({}) });
-    expect(meta.alternates?.canonical).toBe("/");
+    expect(meta.alternates?.canonical).toBe("/town");
   });
 
   it("canonicalises ?building=slug to /character/[slug]", async () => {
@@ -115,11 +115,11 @@ describe("TownPage generateMetadata", () => {
     expect(meta.alternates?.canonical).toBe("/character/zeke");
   });
 
-  it("falls back to '/' canonical when the slug is unknown", async () => {
+  it("falls back to '/town' canonical when the slug is unknown", async () => {
     mocks.fetchCharacterBySlug.mockResolvedValue(null);
     const meta = await generateMetadata({
       searchParams: Promise.resolve({ building: "ghost" }),
     });
-    expect(meta.alternates?.canonical).toBe("/");
+    expect(meta.alternates?.canonical).toBe("/town");
   });
 });

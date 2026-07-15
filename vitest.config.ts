@@ -10,7 +10,6 @@ export default defineConfig({
       include: ["app/api/**/*.ts", "lib/**/*.ts"],
       exclude: [
         "lib/supabase/server.ts",
-        "lib/theme-bootstrap.ts",
         "lib/types.ts",
       ],
       thresholds: {

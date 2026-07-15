@@ -1,5 +1,5 @@
 // components/town-map.tsx
-import Link from "next/link";
+import { MotionLink } from "@/components/motion/motion-link";
 import { CharacterHotspot } from "./character-hotspot";
 import type { TownTile } from "@/lib/town/layout";
 
@@ -14,7 +14,7 @@ const MAP_H = 1086;
 const MAP_SRC = "/town/aquarius-map.png";
 
 /**
- * Town map at /. The Aquarius district illustration is the background; each
+ * Town map at /town. The Aquarius district illustration is the background; each
  * character lives at a hotspot defined by 0..1 fractions in
  * design/town-layout.json. Hotspots fade in a popover with the character's
  * name, role, and user-drawn art panels on hover/focus.
@@ -63,8 +63,8 @@ export function TownMap({ tiles }: Props) {
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:hidden">
         {tiles.map((t) => (
           <li key={t.slug}>
-            <Link
-              href={`/?building=${t.character.slug}`}
+            <MotionLink
+              href={`/town?building=${t.character.slug}`}
               aria-label={`Open ${t.character.name} — ${t.building}`}
               className="ink-frame block p-3 bg-[var(--color-paper)] text-[var(--color-ink)] hover:bg-[var(--color-mauve)] transition-colors"
             >
@@ -81,7 +81,7 @@ export function TownMap({ tiles }: Props) {
                   {t.character.role}
                 </p>
               )}
-            </Link>
+            </MotionLink>
           </li>
         ))}
       </ul>

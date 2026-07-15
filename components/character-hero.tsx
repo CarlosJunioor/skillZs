@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MotionLink } from "@/components/motion/motion-link";
 import type { Character } from "@/lib/types";
 
 interface Props {
@@ -81,9 +81,9 @@ export function CharacterHero({ character, heroUrl }: Props) {
               ↗ site
             </a>
           )}
-          <Link href="/" className="text-[var(--color-rust)] hover:text-[var(--color-grape)] ml-auto">
+          <MotionLink href="/" className="ml-auto text-[var(--color-rust)] hover:text-[var(--color-grape)]">
             ← back to homepage
-          </Link>
+          </MotionLink>
         </div>
       </div>
     </section>

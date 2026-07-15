@@ -143,4 +143,10 @@ describe("SkillCard", () => {
     // Plain byline still present
     expect(html).toContain("PR Review");
   });
+
+  it("can fill a responsive grid and identifies the source repository", () => {
+    const html = renderToString(<SkillCard skill={makeSkill()} className="w-full" />);
+    expect(html).toContain("w-full");
+    expect(html).toContain('title="example/pr-review"');
+  });
 });

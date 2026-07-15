@@ -80,11 +80,40 @@ export async function fetchTrending(limit = 12, sort: SortKey = "hot", coveredOn
     .from("skill_stats")
     .select(STATS_COLUMNS)
     .order(SORT_COLUMN[sort], { ascending: false })
+    .order("slug", { ascending: true })
     .limit(limit);
   if (coveredOnly) q = q.eq("cover_status", "done");
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as SkillStats[];
+}
+
+export function selectDiverseSkills(
+  skills: SkillStats[],
+  limit = 10,
+  maxPerSource = 2,
+): SkillStats[] {
+  const selected: SkillStats[] = [];
+  const selectedIds = new Set<string>();
+  const counts = new Map<string, number>();
+  const target = Math.min(Math.max(0, limit), skills.length);
+
+  for (let sourceCap = Math.max(1, maxPerSource); selected.length < target; sourceCap++) {
+    let added = false;
+    for (const skill of skills) {
+      if (selectedIds.has(skill.id)) continue;
+      const count = counts.get(skill.source_repo) ?? 0;
+      if (count >= sourceCap) continue;
+      selected.push(skill);
+      selectedIds.add(skill.id);
+      counts.set(skill.source_repo, count + 1);
+      added = true;
+      if (selected.length === target) break;
+    }
+    if (!added) break;
+  }
+
+  return selected;
 }
 
 export async function fetchNew(limit = 12, coveredOnly = false): Promise<SkillStats[]> {

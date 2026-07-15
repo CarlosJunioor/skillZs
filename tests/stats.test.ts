@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SkillStats } from "../lib/types";
 
 type QueryResult = {
   data?: unknown;
@@ -34,6 +35,7 @@ import {
   fetchSkillBySlug,
   fetchTrending,
   normalizeSearchQuery,
+  selectDiverseSkills,
 } from "../lib/stats";
 
 function createClient(result: QueryResult) {
@@ -165,6 +167,7 @@ describe("stats queries", () => {
     await expect(fetchTrending(4, "stars", true)).resolves.toEqual([{ id: "hot" }]);
 
     expect(trending.calls).toContainEqual({ method: "order", column: "github_stars", options: { ascending: false } });
+    expect(trending.calls).toContainEqual({ method: "order", column: "slug", options: { ascending: true } });
     expect(trending.calls).toContainEqual({ method: "limit", count: 4 });
     expect(trending.calls).toContainEqual({ method: "eq", column: "cover_status", value: "done" });
 
@@ -174,6 +177,25 @@ describe("stats queries", () => {
 
     expect(newest.calls).toContainEqual({ method: "order", column: "first_seen", options: { ascending: false } });
     expect(newest.calls).toContainEqual({ method: "limit", count: 2 });
+  });
+
+  it("balances a ranking across sources, then fills any remaining slots", () => {
+    const skills = [
+      { id: "a1", source_repo: "a/repo" },
+      { id: "a2", source_repo: "a/repo" },
+      { id: "a3", source_repo: "a/repo" },
+      { id: "b1", source_repo: "b/repo" },
+      { id: "b2", source_repo: "b/repo" },
+      { id: "c1", source_repo: "c/repo" },
+    ] as SkillStats[];
+
+    expect(selectDiverseSkills(skills, 5, 1).map((skill) => skill.id)).toEqual([
+      "a1",
+      "b1",
+      "c1",
+      "a2",
+      "b2",
+    ]);
   });
 
   it("fetchByCategory filters null categories before limiting", async () => {

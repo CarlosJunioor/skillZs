@@ -8,12 +8,13 @@ const DESCRIPTION_MAX = 160;
 
 export const siteConfig = {
   name: "skillZs",
-  title: "skillZs - Claude skills catalog",
+  title: "skillZs - AI agent skills catalog",
   description:
-    "Discover, compare, and install hand-tagged Claude skills from public GitHub repos, ranked by votes, usage, stars, and freshness.",
+    "Discover and install reusable skills for Claude Code, Codex, Cursor, and other AI agents, ranked by real ecosystem installs.",
   url: siteUrl(),
   ogImage: DEFAULT_OG_IMAGE,
   keywords: [
+    "agent skills",
     "Claude skills",
     "Claude Code skills",
     "AI agent skills",
@@ -72,13 +73,13 @@ export function categoryRoute(slug: string | null | undefined): string {
 
 export function categoryTitle(slug: string | null | undefined): string {
   const label = categoryRoutes.find((category) => category.slug === (slug ?? "other"))?.label ?? categoryLabel(slug);
-  return `${label} Claude skills`;
+  return `${label} AI agent skills`;
 }
 
 export function categoryDescription(slug: string | null | undefined): string {
   const label = categoryRoutes.find((category) => category.slug === (slug ?? "other"))?.label.toLowerCase() ?? categoryLabel(slug).toLowerCase();
   return seoDescription(
-    `Browse ${label} Claude skills for agents, automation, workflows, prompts, coding, research, and creative projects.`,
+    `Browse ${label} skills for Claude Code, Codex, Cursor, and other AI agents, ranked from the live skills ecosystem.`,
   );
 }
 

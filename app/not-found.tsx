@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { MotionLink } from "@/components/motion/motion-link";
 import { Mascot } from "@/components/mascot";
 
 export default function NotFound() {
@@ -14,13 +14,13 @@ export default function NotFound() {
         <p className="type-font text-[var(--color-rust)] mb-6 max-w-sm">
           mascot says it never existed. could be a slug typo. could be the catalog hasn&apos;t scraped it yet.
         </p>
-        <Link
+        <MotionLink
           href="/"
           className="tag-pill text-lg px-6 py-3 inline-block"
           style={{ background: "var(--color-grape)", color: "var(--color-paper)" }}
         >
           ← head back
-        </Link>
+        </MotionLink>
       </div>
       <div className="order-1 md:order-2 flex justify-center">
         <Mascot height={420} tilt={3} className="drop-shadow-[8px_8px_0_#1A1A1A]" />

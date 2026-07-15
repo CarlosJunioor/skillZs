@@ -40,9 +40,9 @@ describe("BuildingDrawer", () => {
     expect(html).toContain('href="/character/zeke"');
   });
 
-  it("includes a close link back to /", () => {
+  it("includes a close link back to /town", () => {
     const html = renderToString(<BuildingDrawer character={character()} />);
-    expect(html).toMatch(/<a[^>]+href="\/"[^>]*>/);
+    expect(html).toMatch(/<a[^>]+href="\/town"[^>]*>/);
   });
 
   it("does NOT render a skills-count chip (zero would read 'broken' at launch)", () => {

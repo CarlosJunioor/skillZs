@@ -1,5 +1,7 @@
-// components/building-drawer.tsx
-import Link from "next/link";
+"use client";
+
+import { Drawer } from "@/components/motion/drawer";
+import { MotionLink } from "@/components/motion/motion-link";
 import type { Character } from "@/lib/types";
 
 interface Props {
@@ -10,21 +12,32 @@ interface Props {
 }
 
 /**
- * Slide-in panel for the town map. Server-rendered; open state is driven by
- * the ?building=slug search param on /. Content mirrors CharacterHero
+ * Slide-in panel for the town map. Open state is driven by the
+ * ?building=slug search param on /town. Content mirrors CharacterHero
  * (identity content only — no skills row; that lives on /character/[slug]).
  */
 export function BuildingDrawer({ character: c, heroUrl }: Props) {
   const hero = heroUrl ?? c.avatar_url;
   return (
-    <aside className="fixed inset-x-0 bottom-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[420px] z-40 bg-[var(--color-paper)] border-t-[3px] lg:border-l-[3px] lg:border-t-0 border-[var(--color-ink)] p-6 overflow-y-auto">
+    <Drawer
+      open
+      onOpenChange={(open) => {
+        if (!open) window.location.assign("/town");
+      }}
+      ariaLabel={`${c.name} character profile`}
+      className="p-6"
+    >
       <div className="flex items-start justify-between mb-4">
         <span className="bubble text-xs">
           {c.kind === "zeke" ? "in-house" : "influencer"}
         </span>
-        <Link href="/" aria-label="close" className="display text-2xl leading-none">
+        <MotionLink
+          href="/town"
+          aria-label="close"
+          className="display inline-flex h-8 w-8 items-center justify-center text-2xl leading-none"
+        >
           ×
-        </Link>
+        </MotionLink>
       </div>
 
       <div className="ink-frame relative w-full aspect-square overflow-hidden grain bg-[var(--color-mauve)] mb-5">
@@ -85,12 +98,12 @@ export function BuildingDrawer({ character: c, heroUrl }: Props) {
         )}
       </div>
 
-      <Link
+      <MotionLink
         href={`/character/${c.slug}`}
         className="block w-full ink-frame-soft bg-[var(--color-ink)] text-[var(--color-paper)] text-center py-3 display"
       >
         deep dive →
-      </Link>
-    </aside>
+      </MotionLink>
+    </Drawer>
   );
 }

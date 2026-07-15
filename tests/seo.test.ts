@@ -59,7 +59,7 @@ describe("seo helpers", () => {
   it("maps category metadata to canonical category routes", () => {
     expect(categoryRoute("agent")).toBe("/category/agents");
     expect(categoryRoute(null)).toBe("/category/other");
-    expect(categoryTitle("agent")).toBe("Agents Claude skills");
+    expect(categoryTitle("agent")).toBe("Agents AI agent skills");
   });
 
   it("builds page metadata with canonical, social, and robots fields", () => {

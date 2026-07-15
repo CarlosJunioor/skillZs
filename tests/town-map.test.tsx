@@ -14,7 +14,7 @@ vi.mock("../components/character-hotspot", () => ({
     React.createElement(
       "a",
       {
-        href: `/?building=${tile.slug}`,
+        href: `/town?building=${tile.slug}`,
         "aria-label": `Open ${tile.character.name} — ${tile.building}`,
       },
       tile.slug,
@@ -61,8 +61,8 @@ describe("TownMap", () => {
     const html = renderToString(
       <TownMap tiles={[tile("zeke"), tile("matt-pocock", { x: 0.43, y: 0.18, w: 0.12, h: 0.2 })]} />,
     );
-    expect(html).toContain('href="/?building=zeke"');
-    expect(html).toContain('href="/?building=matt-pocock"');
+    expect(html).toContain('href="/town?building=zeke"');
+    expect(html).toContain('href="/town?building=matt-pocock"');
   });
 
   it("positions hotspots using percentage-of-map fractions", () => {
@@ -80,7 +80,7 @@ describe("TownMap", () => {
       <TownMap tiles={[tile("zeke"), tile("matt-pocock", { x: 0.43, y: 0.18, w: 0.12, h: 0.2 })]} />,
     );
     // both the desktop hotspot mock and the mobile list link should reference the slug
-    const zekeMatches = html.match(/href="\/\?building=zeke"/g) ?? [];
+    const zekeMatches = html.match(/href="\/town\?building=zeke"/g) ?? [];
     expect(zekeMatches.length).toBeGreaterThanOrEqual(2);
   });
 });

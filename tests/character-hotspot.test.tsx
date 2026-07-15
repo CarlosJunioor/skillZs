@@ -40,9 +40,9 @@ function tile(over: Partial<TownTile> = {}): TownTile {
 }
 
 describe("CharacterHotspot", () => {
-  it("wraps the hotspot in a link to /?building=slug", () => {
+  it("wraps the hotspot in a link to /town?building=slug", () => {
     const html = renderToString(<CharacterHotspot tile={tile()} />);
-    expect(html).toContain('href="/?building=zeke"');
+    expect(html).toContain('href="/town?building=zeke"');
   });
 
   it("exposes an accessible label naming the character and building", () => {

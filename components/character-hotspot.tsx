@@ -1,5 +1,5 @@
 // components/character-hotspot.tsx
-import Link from "next/link";
+import { MotionLink } from "@/components/motion/motion-link";
 import type { TownTile } from "@/lib/town/layout";
 
 interface Props {
@@ -24,8 +24,8 @@ export function CharacterHotspot({ tile }: Props) {
   const popoverPos = popoverBelow ? "top-full mt-2" : "bottom-full mb-2";
 
   return (
-    <Link
-      href={`/?building=${c.slug}`}
+    <MotionLink
+      href={`/town?building=${c.slug}`}
       aria-label={`Open ${c.name} — ${tile.building}`}
       className="group absolute inset-0 block focus:outline-none"
     >
@@ -96,6 +96,6 @@ export function CharacterHotspot({ tile }: Props) {
           </p>
         </div>
       </div>
-    </Link>
+    </MotionLink>
   );
 }

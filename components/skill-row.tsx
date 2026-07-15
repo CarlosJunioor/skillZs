@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useSyncExternalStore } from "react";
+import { Button } from "@/components/motion/button";
 import { SkillCard } from "./skill-card";
 import type { SkillStats } from "@/lib/types";
 
@@ -71,16 +72,20 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
           <span className="tag-font text-[var(--color-grape)] hidden md:inline-block rotate-[-2deg]">
             scroll &rarr;
           </span>
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => scroll(-1)}
-            className="w-10 h-10 ink-frame-soft bg-[var(--color-paper)] hover:bg-[var(--color-olive)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none flex items-center justify-center display"
+            className="display h-10 w-10 rounded-none bg-[var(--color-paper)] hover:bg-[var(--color-olive)]"
             aria-label={`Scroll ${title} left`}
-          >‹</button>
-          <button
+          >‹</Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => scroll(1)}
-            className="w-10 h-10 ink-frame-soft bg-[var(--color-paper)] hover:bg-[var(--color-olive)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none flex items-center justify-center display"
+            className="display h-10 w-10 rounded-none bg-[var(--color-paper)] hover:bg-[var(--color-olive)]"
             aria-label={`Scroll ${title} right`}
-          >›</button>
+          >›</Button>
         </div>
       </div>
 
