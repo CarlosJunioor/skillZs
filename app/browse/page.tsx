@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
 import { Button } from "@/components/motion/button";
 import { Input } from "@/components/motion/input";
 import { MotionLink } from "@/components/motion/motion-link";
 import { RouteTabs } from "@/components/motion/route-tabs";
 import { SkillLeaderboard } from "@/components/skill-leaderboard";
-import { buildPageMetadata } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 import {
+  catalogSkillPath,
   listCatalogSkills,
   searchCatalogSkills,
   type CatalogSkill,
@@ -14,7 +16,18 @@ import {
 
 export const revalidate = 60;
 
-const browseDescription = "Search and rank thousands of reusable skills for Claude Code, Codex, Cursor, and other AI agents.";
+const browseDescription = "Browse the Agent Skills directory for Claude Code, Codex, Cursor, and other AI tools. Search SKILL.md workflows ranked by live installs.";
+
+const BROWSE_FAQS = [
+  {
+    question: "What are the most popular AI agent skills?",
+    answer: "The default directory view ranks Agent Skills by all-time ecosystem installs. Trending shows recent momentum and hot shows current activity. These rankings are discovery signals, not endorsements.",
+  },
+  {
+    question: "How do you choose the right agent skill?",
+    answer: "Match the skill description to one concrete job, read the complete SKILL.md, verify tools and permissions, then test the workflow on a small reversible task before using it on important work.",
+  },
+] as const;
 
 export async function generateMetadata({
   searchParams,
@@ -24,7 +37,7 @@ export async function generateMetadata({
   const sp = await searchParams;
   const isVariant = Boolean(sp.q || sp.view || (sp.page && sp.page !== "1"));
   return buildPageMetadata({
-    title: "Browse agent skills",
+    title: "Agent Skills Directory: Browse All Skills",
     description: browseDescription,
     path: "/browse",
     noIndex: isVariant,
@@ -78,14 +91,53 @@ export default async function BrowsePage({
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
   };
+  const collection = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Agent Skills Directory",
+    description: browseDescription,
+    url: absoluteUrl("/browse"),
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: skills.length,
+      itemListElement: skills.map((skill, index) => ({
+        "@type": "ListItem",
+        position: (page - 1) * PER_PAGE + index + 1,
+        name: skill.name,
+        url: absoluteUrl(catalogSkillPath(skill)),
+      })),
+    },
+  };
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: BROWSE_FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
 
   return (
     <div className="pt-8">
-      <header className="flex items-end justify-between flex-wrap gap-3 mb-6">
-        <h1 className="display text-5xl md:text-7xl leading-none"><span className="drip">browse skills</span></h1>
-        <span className="tag-font text-[var(--color-grape)] text-xl rotate-[-2deg]">
-          {query ? `${total} matches` : `${total.toLocaleString()} indexed`}
-        </span>
+      <JsonLd data={[
+        collection,
+        faq,
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Agent Skills Directory", path: "/browse" },
+        ]),
+      ]} />
+      <header className="mb-6">
+        <div className="flex items-end justify-between flex-wrap gap-3">
+          <h1 className="display text-5xl md:text-7xl leading-none"><span className="drip">agent skills directory</span></h1>
+          <span className="tag-font text-[var(--color-grape)] text-xl rotate-[-2deg]">
+            {query ? `${total} matches` : `${total.toLocaleString()} indexed`}
+          </span>
+        </div>
+        <p className="type-font mt-5 max-w-3xl text-sm leading-6 text-[var(--color-ink-soft)]">
+          The skillZs Agent Skills Directory indexes reusable SKILL.md workflows for Claude Code, Codex, Cursor, and other compatible AI tools. Search by job or technology, compare live install rankings, inspect the original source and manual, then review permissions before installing.
+        </p>
       </header>
 
       <div className="ink-frame-soft bg-[var(--color-paper-2)] p-4 mb-8 space-y-4">
@@ -128,6 +180,21 @@ export default async function BrowsePage({
       ) : (
         <div className="ink-frame p-10 text-center"><p className="display text-2xl">nothing found</p></div>
       )}
+
+      <section className="mt-12 grid gap-5 md:grid-cols-2" aria-label="About the agent skill catalog">
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-2xl">{BROWSE_FAQS[0].question}</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            {BROWSE_FAQS[0].answer} See the methodology and current leaders in the <MotionLink href="/guides/best-agent-skills">best Agent Skills ranking guide</MotionLink>.
+          </p>
+        </article>
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-2xl">{BROWSE_FAQS[1].question}</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            {BROWSE_FAQS[1].answer} To build your own workflow, use the <MotionLink href="/guides/how-to-create-agent-skills">agent skill creation guide</MotionLink>.
+          </p>
+        </article>
+      </section>
 
       {!query && (page > 1 || hasMore) && (
         <nav aria-label="Catalog pages" className="mt-10 flex items-center justify-center gap-3">

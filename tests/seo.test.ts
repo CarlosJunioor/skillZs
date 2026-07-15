@@ -72,10 +72,20 @@ describe("seo helpers", () => {
     });
 
     expect(metadata.title).toBe("Demo");
-    expect(metadata.description).toBe("Demo page");
+    expect(String(metadata.description).length).toBeGreaterThanOrEqual(70);
     expect(metadata.alternates?.canonical).toBe("/demo");
     expect(metadata.twitter?.images).toEqual(["/demo.png"]);
     expect(metadata.robots).toEqual({ index: false, follow: true });
+  });
+
+  it("keeps generated titles within the root template limit", () => {
+    const metadata = buildPageMetadata({
+      title: "x".repeat(100),
+      description: "A complete description that is already long enough for a useful search result snippet.",
+      path: "/long-title",
+    });
+
+    expect(String(metadata.title)).toHaveLength(50);
   });
 
   it("derives skill descriptions and images from the best available fields", () => {

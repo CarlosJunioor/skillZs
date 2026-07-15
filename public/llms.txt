@@ -1,0 +1,48 @@
+# skillZs
+
+> skillZs is an open, searchable catalog and learning hub for reusable AI agent skills. It covers Claude Code, Codex, Cursor, and other tools that support the Agent Skills format. Listings are ranked by real ecosystem installs, with no paid placement.
+
+## Start here
+
+- [Agent skills catalog](https://skillzs.dev/): Discover the most-installed AI agent skills.
+- [Browse all agent skills](https://skillzs.dev/browse): Search the full catalog and compare all-time, trending, and hot skills.
+- [Agent skills guides](https://skillzs.dev/guides): Learn how to create, install, compare, test, and secure portable agent skills.
+- [Agent Skills Ecosystem Report 2026](https://skillzs.dev/research/agent-skills-report-2026): Live top-500 analysis of catalog size, installs, source concentration, methodology, and creator lessons.
+- [Best Agent Skills](https://skillzs.dev/guides/best-agent-skills): Live all-time install rankings with transparent methodology, safety caveats, and selection criteria.
+- [How to create an agent skill](https://skillzs.dev/guides/how-to-create-agent-skills): A complete SKILL.md guide with a working example, testing checklist, publishing advice, and official references.
+- [How to publish an Agent Skill](https://skillzs.dev/guides/how-to-publish-agent-skills): Publish from GitHub, test the public install path, become eligible for ecosystem discovery, and document trust signals.
+- [How to install agent skills](https://skillzs.dev/guides/how-to-install-agent-skills): Client directories, safe source review, activation tests, updates, and removal.
+- [Agent Skills vs MCP](https://skillzs.dev/guides/agent-skills-vs-mcp): A practical architecture comparison of portable workflows and connected capabilities.
+- [Agent skill security](https://skillzs.dev/guides/agent-skill-security): A review checklist for instructions, code, permissions, secrets, network access, and supply-chain updates.
+- [AI agent loop library](https://skillzs.dev/loops): Reusable agent workflow patterns with stop conditions and copyable prompts.
+- [About and methodology](https://skillzs.dev/about): Catalog sources, ranking policy, security-audit limitations, editorial methods, and corrections.
+
+## Browse by topic
+
+- [Coding skills](https://skillzs.dev/category/coding)
+- [Creative skills](https://skillzs.dev/category/creative)
+- [Agent skills](https://skillzs.dev/category/agents)
+- [Productivity and utility skills](https://skillzs.dev/category/utils)
+- [Research skills](https://skillzs.dev/category/research)
+
+## What skillZs provides
+
+- Searchable Agent Skills and SKILL.md manuals
+- Install commands for individual skills
+- Rankings based on real ecosystem installs
+- Source links and available security-audit summaries
+- Guides for creating, testing, and publishing portable agent skills
+
+## Pricing
+
+skillZs is free to browse and use. There is no paid placement and no account is required.
+
+## Access
+
+The public catalog and guides are free, require no login, and permit indexing by search and answer-engine crawlers. API and administrative routes are not public content.
+
+## Canonical site
+
+- Website: https://skillzs.dev
+- Sitemap: https://skillzs.dev/sitemap/0.xml
+- Robots: https://skillzs.dev/robots.txt

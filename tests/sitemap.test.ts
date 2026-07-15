@@ -3,12 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCatalogTotal: vi.fn<() => Promise<number>>(),
   listCatalogSkillPages: vi.fn(),
+  fetchSitemapCharacters: vi.fn(),
 }));
 
 vi.mock("@/lib/skills-sh", () => ({
   catalogSkillPath: ({ id }: { id: string }) => `/skills/${id}`,
   getCatalogTotal: mocks.getCatalogTotal,
   listCatalogSkillPages: mocks.listCatalogSkillPages,
+}));
+
+vi.mock("@/lib/stats", () => ({
+  fetchSitemapCharacters: mocks.fetchSitemapCharacters,
 }));
 
 import sitemap, { generateSitemaps } from "../app/sitemap";
@@ -18,6 +23,8 @@ describe("catalog sitemap", () => {
     vi.restoreAllMocks();
     mocks.getCatalogTotal.mockReset();
     mocks.listCatalogSkillPages.mockReset();
+    mocks.fetchSitemapCharacters.mockReset();
+    mocks.fetchSitemapCharacters.mockResolvedValue([{ slug: "matt-pocock" }]);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
@@ -31,7 +38,19 @@ describe("catalog sitemap", () => {
       expect.stringMatching(/\/$/),
       expect.stringMatching(/\/browse$/),
       expect.stringMatching(/\/policies$/),
+      expect.stringMatching(/\/about$/),
+      expect.stringMatching(/\/loops$/),
+      expect.stringMatching(/\/guides$/),
+      expect.stringMatching(/\/research\/agent-skills-report-2026$/),
+      expect.stringMatching(/\/guides\/best-agent-skills$/),
+      expect.stringMatching(/\/guides\/how-to-create-agent-skills$/),
+      expect.stringMatching(/\/guides\/how-to-publish-agent-skills$/),
+      expect.stringMatching(/\/guides\/how-to-install-agent-skills$/),
+      expect.stringMatching(/\/guides\/agent-skills-vs-mcp$/),
+      expect.stringMatching(/\/guides\/agent-skill-security$/),
+      expect.stringMatching(/\/character\/matt-pocock$/),
     ]));
+    expect(entries.some((entry) => entry.url.endsWith("/town"))).toBe(false);
     expect(mocks.listCatalogSkillPages).not.toHaveBeenCalled();
   });
 });

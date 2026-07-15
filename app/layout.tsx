@@ -24,6 +24,9 @@ export const viewport: Viewport = { themeColor: "#050505", colorScheme: "dark" }
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
   title: {
     default: siteConfig.title,
     template: `%s | ${siteConfig.name}`,
@@ -59,6 +62,8 @@ export const metadata: Metadata = {
       {
         url: siteConfig.ogImage,
         alt: `${siteConfig.name} Claude skills catalog`,
+        width: 1200,
+        height: 630,
       },
     ],
   },
@@ -74,9 +79,9 @@ export const metadata: Metadata = {
 const NAV = [
   { href: "/", label: "index" },
   { href: "/browse", label: "browse all" },
+  { href: "/guides", label: "guides" },
+  { href: "/loops", label: "loops" },
   { href: "/browse?view=trending", label: "trending" },
-  { href: "/browse?view=hot", label: "hot" },
-  { href: "/town", label: "town" },
 ];
 
 export default async function RootLayout({
@@ -135,6 +140,7 @@ export default async function RootLayout({
             <div>
               <div className="tag-font text-[var(--color-grape)] text-xs uppercase tracking-[0.16em] mb-3">status</div>
               <p className="type-font text-sm"><span className="text-[var(--color-grape)]">●</span> catalog sync active</p>
+              <p className="type-font mt-2 text-sm"><MotionLink href="/about" className="hover:text-[var(--color-grape)]">&rarr; about / methodology</MotionLink></p>
               <p className="type-font mt-2 text-sm"><MotionLink href="/policies" className="hover:text-[var(--color-grape)]">&rarr; policies / security</MotionLink></p>
               <p className="type-font text-xs mt-4 text-[var(--color-rust)]">&copy; {new Date().getFullYear()} &middot; open skill index</p>
             </div>

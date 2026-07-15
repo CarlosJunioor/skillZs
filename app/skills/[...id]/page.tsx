@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { JsonLd } from "@/components/json-ld";
+import { CharacterChip } from "@/components/character-chip";
 import { compactNumber } from "@/lib/format";
+import { characterForSource } from "@/lib/character/seed";
 import { parseSkill } from "@/lib/ingest/parse-skill";
-import { absoluteUrl, buildPageMetadata, seoDescription } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, buildPageMetadata, seoDescription } from "@/lib/seo";
 import { getCatalogSkill, getSkillAudits } from "@/lib/skills-sh";
 
 export const revalidate = 300;
@@ -68,21 +70,59 @@ export default async function CatalogSkillPage({
   const name = parsed?.name ?? skill.slug;
   const description = parsed?.description ?? `A reusable agent skill published by ${skill.source}.`;
   const sourceUrl = installUrl(skill.source);
+  const creator = characterForSource(skill.source);
   const command = `npx skills add ${sourceUrl} --skill ${skill.slug}`;
   const pagePath = pathFor(id);
+  const canonicalUrl = absoluteUrl(pagePath);
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareSourceCode",
     name,
     description: seoDescription(description),
-    url: absoluteUrl(pagePath),
+    url: canonicalUrl,
     codeRepository: sourceUrl,
     programmingLanguage: "Markdown",
+    ...(creator ? {
+      author: {
+        "@type": "Person",
+        name: creator.name,
+        url: absoluteUrl(`/character/${creator.slug}`),
+      },
+    } : {}),
+  };
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "How do I install this agent skill?",
+        acceptedAnswer: { "@type": "Answer", text: `Run ${command}.` },
+      },
+      {
+        "@type": "Question",
+        name: "Is this agent skill safe to install?",
+        acceptedAnswer: { "@type": "Answer", text: "Review the displayed partner audits, complete source, permissions, dependencies, and exact revision before installing." },
+      },
+      {
+        "@type": "Question",
+        name: "What does this agent skill do?",
+        acceptedAnswer: { "@type": "Answer", text: seoDescription(description) },
+      },
+    ],
   };
 
   return (
     <article className="pt-8 max-w-5xl mx-auto">
-      <JsonLd data={schema} />
+      <JsonLd data={[
+        schema,
+        faq,
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Agent Skills Directory", path: "/browse" },
+          { name, path: pagePath },
+        ]),
+      ]} />
       <MotionLink href="/browse" className="tag-font mb-5 inline-block text-[var(--color-grape)] hover:underline">
         ← back to all skills
       </MotionLink>
@@ -91,6 +131,13 @@ export default async function CatalogSkillPage({
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <span className="bubble text-xs">{skill.source}</span>
           <span className="stamp text-xs">{compactNumber(skill.installs)} installs</span>
+          {creator && (
+            <CharacterChip
+              slug={creator.slug}
+              name={creator.name}
+              avatarUrl={`/characters/${creator.slug}/1.png`}
+            />
+          )}
         </div>
         <h1 className="display text-4xl sm:text-5xl md:text-7xl leading-[0.92] break-words mb-4">
           <span className="drip">{name}</span>
@@ -98,7 +145,7 @@ export default async function CatalogSkillPage({
         <p className="type-font text-base md:text-lg leading-relaxed max-w-3xl">{description}</p>
 
         <div className="mt-8 command-panel p-4 overflow-x-auto">
-          <div className="tag-font text-xs mb-2 text-[var(--color-grape)] uppercase tracking-[0.14em]">install this skill</div>
+          <h2 className="tag-font text-xs mb-2 text-[var(--color-grape)] uppercase tracking-[0.14em]">How do I install this agent skill?</h2>
           <code className="type-font text-sm whitespace-nowrap">{command}</code>
         </div>
         <a href={sourceUrl} target="_blank" rel="noreferrer" className="tag-pill inline-block mt-4">
@@ -107,7 +154,7 @@ export default async function CatalogSkillPage({
       </header>
 
       <section aria-labelledby="security-heading" className="mb-10">
-        <h2 id="security-heading" className="display text-3xl mb-4"><span className="drip">security checks</span></h2>
+        <h2 id="security-heading" className="display text-3xl mb-4"><span className="drip">Is this agent skill safe to install?</span></h2>
         {audits.length > 0 ? (
           <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {audits.map((audit) => (
@@ -127,7 +174,7 @@ export default async function CatalogSkillPage({
 
       {parsed?.body && (
         <section aria-labelledby="manual-heading">
-          <h2 id="manual-heading" className="display text-3xl mb-4"><span className="drip">the manual</span></h2>
+          <h2 id="manual-heading" className="display text-3xl mb-4"><span className="drip">What does this agent skill do?</span></h2>
           <div className="ink-frame p-6 md:p-10 bg-[var(--color-paper)] grain">
             <div className="prose-zine type-font max-w-none leading-relaxed">
               <ReactMarkdown
@@ -140,6 +187,14 @@ export default async function CatalogSkillPage({
           </div>
         </section>
       )}
+
+      <section className="mt-10 ink-frame-soft bg-[var(--color-paper-2)] p-5" aria-labelledby="creator-link-heading">
+        <h2 id="creator-link-heading" className="display text-2xl">How can the creator link this skill?</h2>
+        <p className="type-font mt-3 text-sm leading-6">
+          Add the canonical catalog link to the repository README so users can inspect current installs and available audits. The <MotionLink href="/guides/how-to-publish-agent-skills">publishing guide</MotionLink> covers the complete discovery path.
+        </p>
+        <pre className="mt-4 overflow-x-auto"><code>{`<a href="${canonicalUrl}">View ${name} on skillZs</a>`}</code></pre>
+      </section>
     </article>
   );
 }

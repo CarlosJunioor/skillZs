@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { contentSecurityPolicy } from "./lib/csp";
 
 export function proxy(request: NextRequest) {
+  if (request.nextUrl.hostname.toLowerCase() === "www.skillzs.dev") {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.host = "skillzs.dev";
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce);
   const requestHeaders = new Headers(request.headers);

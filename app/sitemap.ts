@@ -5,10 +5,12 @@ import {
   getCatalogTotal,
   listCatalogSkillPages,
 } from "@/lib/skills-sh";
+import { fetchSitemapCharacters } from "@/lib/stats";
 
 export const revalidate = 3600;
 const SITEMAP_SIZE = 50_000;
 const API_PAGE_SIZE = 500;
+const CONTENT_UPDATED = new Date("2026-07-15T00:00:00.000Z");
 
 async function catalogTotalOrZero(): Promise<number> {
   try {
@@ -24,6 +26,15 @@ async function catalogSkillsOrEmpty(startPage: number, pageCount: number) {
     return await listCatalogSkillPages(startPage, pageCount);
   } catch (error) {
     console.warn("sitemap catalog pages unavailable:", error);
+    return [];
+  }
+}
+
+async function sitemapCharactersOrEmpty() {
+  try {
+    return await fetchSitemapCharacters();
+  } catch (error) {
+    console.warn("sitemap characters unavailable:", error);
     return [];
   }
 }
@@ -55,16 +66,13 @@ export default async function sitemap({
       Math.ceil(itemCount / API_PAGE_SIZE),
     )
     : [];
+  const characters = sitemapId === 0 ? await sitemapCharactersOrEmpty() : [];
   const staticRoutes: MetadataRoute.Sitemap = sitemapId === 0 ? [
     {
       url: absoluteUrl("/"),
+      lastModified: CONTENT_UPDATED,
       changeFrequency: "daily",
       priority: 1,
-    },
-    {
-      url: absoluteUrl("/town"),
-      changeFrequency: "weekly",
-      priority: 0.6,
     },
     {
       url: absoluteUrl("/browse"),
@@ -76,10 +84,74 @@ export default async function sitemap({
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    {
+      url: absoluteUrl("/about"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: absoluteUrl("/loops"),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/guides"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/research/agent-skills-report-2026"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/how-to-create-agent-skills"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/how-to-publish-agent-skills"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/best-agent-skills"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/how-to-install-agent-skills"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/agent-skills-vs-mcp"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/guides/agent-skill-security"),
+      lastModified: CONTENT_UPDATED,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
     ...categoryRoutes.map((category) => ({
       url: absoluteUrl(category.path),
       changeFrequency: "daily" as const,
       priority: 0.8,
+    })),
+    ...characters.map((character) => ({
+      url: absoluteUrl(`/character/${character.slug}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
     })),
   ] : [];
 
