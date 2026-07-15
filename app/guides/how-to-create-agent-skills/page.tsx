@@ -382,6 +382,9 @@ license: MIT
           <p>
             Test at least three positive prompts, two close negative prompts, and one ambiguous prompt. If the skill fails to load, improve the description before making the body longer. If it activates too often, narrow the trigger conditions. Reliable selection matters more than an elaborate workflow the agent never loads.
           </p>
+          <p>
+            A 2026 study of 138,133 public skills identified routing metadata as the clearest functional bottleneck: skills without routing defects were retrieved more reliably than skills with missing, vague, overlong, or misplaced descriptions. See <a href="https://openreview.net/pdf?id=n0AIlfxDU0" target="_blank" rel="noreferrer">What Keeps Agent Skills from Being Reusable?</a> for the dataset, detector, and limitations.
+          </p>
         </section>
 
         <section id="testing">
