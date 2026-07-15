@@ -6,12 +6,28 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Admin spend dashboard. Returns totals + per-status counts for the diptych
- * pipeline and the character-avatar pipeline so the owner can see what the
- * AI gen has cost so far and which rows are stuck.
+ * Admin spend dashboard. Returns recorded spend + per-status counts for the
+ * paid gpt-image-1 pipelines so the owner can see roughly what AI gen has cost
+ * and which rows are stuck: skill diptychs and creator avatars.
+ *
+ * Caveats (the figure is a lower bound, not an exact invoice):
+ * - Per-row *_cost_usd reflects the MOST RECENT generation attempt, so spend on
+ *   a row that was charged on an earlier failed attempt before succeeding (or
+ *   before exhausting the 3-attempt cap) is approximate, not cumulative.
+ * - Cover spend is not tracked per-row (no cost column; covers is manual-only,
+ *   not on a cron), so it is out of scope here.
  *
  * Auth: DIPTYCH_CRON_SECRET. Service-role read, never exposed to anon.
  */
+function sumCost(value: number | string | null | undefined): number {
+  const cost = Number(value ?? 0);
+  return Number.isFinite(cost) ? cost : 0;
+}
+
+function round(n: number): number {
+  return Number(n.toFixed(4));
+}
+
 export async function GET(req: Request) {
   if (!isAuthorizedCronRequest(req, "DIPTYCH_CRON_SECRET")) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
@@ -34,7 +50,10 @@ export async function GET(req: Request) {
   }
 
   type SkillRow = { diptych_status: string | null; diptych_cost_usd: number | string | null };
-  type CharRow = { avatar_status: string | null; avatar_cost_usd: number | string | null };
+  type CharRow = {
+    avatar_status: string | null;
+    avatar_cost_usd: number | string | null;
+  };
 
   const skills = (skillsRes.data ?? []) as SkillRow[];
   const skillByStatus: Record<string, number> = {};
@@ -42,30 +61,28 @@ export async function GET(req: Request) {
   for (const r of skills) {
     const status = r.diptych_status ?? "pending";
     skillByStatus[status] = (skillByStatus[status] ?? 0) + 1;
-    const cost = Number(r.diptych_cost_usd ?? 0);
-    if (Number.isFinite(cost)) skillTotal += cost;
+    skillTotal += sumCost(r.diptych_cost_usd);
   }
 
   const characters = (charactersRes.data ?? []) as CharRow[];
-  const charByStatus: Record<string, number> = {};
-  let charTotal = 0;
+  const avatarByStatus: Record<string, number> = {};
+  let avatarTotal = 0;
   for (const r of characters) {
-    const status = r.avatar_status ?? "pending";
-    charByStatus[status] = (charByStatus[status] ?? 0) + 1;
-    const cost = Number(r.avatar_cost_usd ?? 0);
-    if (Number.isFinite(cost)) charTotal += cost;
+    const aStatus = r.avatar_status ?? "pending";
+    avatarByStatus[aStatus] = (avatarByStatus[aStatus] ?? 0) + 1;
+    avatarTotal += sumCost(r.avatar_cost_usd);
   }
 
   return NextResponse.json({
     ok: true,
     total_skills: skills.length,
     by_status: skillByStatus,
-    total_usd: Number(skillTotal.toFixed(4)),
+    total_usd: round(skillTotal),
     characters: {
       total: characters.length,
-      by_status: charByStatus,
-      total_usd: Number(charTotal.toFixed(4)),
+      by_status: avatarByStatus,
+      total_usd: round(avatarTotal),
     },
-    grand_total_usd: Number((skillTotal + charTotal).toFixed(4)),
+    grand_total_usd: round(skillTotal + avatarTotal),
   });
 }

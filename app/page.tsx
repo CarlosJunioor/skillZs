@@ -1,104 +1,153 @@
-// app/page.tsx — Aquarius town map (sub-project C).
-// The old zine homepage now lives at /zine.
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { TownMap } from "@/components/town-map";
-import { BuildingDrawer } from "@/components/building-drawer";
-import { DrawerSkeleton } from "@/components/drawer-skeleton";
 import { JsonLd } from "@/components/json-ld";
-import { loadTownLayout } from "@/lib/town/layout";
-import { resolveCharacterHero } from "@/lib/character/art";
-import { fetchCharacterBySlug } from "@/lib/stats";
-import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
+import { MotionLink } from "@/components/motion/motion-link";
+import { SkillLeaderboard } from "@/components/skill-leaderboard";
+import { absoluteUrl, siteConfig, buildPageMetadata } from "@/lib/seo";
+import { catalogSkillPath, listCatalogSkills, type CatalogSkill } from "@/lib/skills-sh";
 
-export const revalidate = 120;
+export const revalidate = 300;
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ building?: string }>;
-}): Promise<Metadata> {
-  const sp = await searchParams;
-  if (sp.building) {
-    const character = await fetchCharacterBySlug(sp.building);
-    if (character) {
-      const hero = resolveCharacterHero(character);
-      return buildPageMetadata({
-        title: `${character.name} on skillZs`,
-        description: character.bio ?? character.role ?? `Skills shipped by ${character.name}.`,
-        path: `/character/${character.slug}`,
-        ...(hero ? { image: hero } : {}),
-        imageAlt: character.name,
-        type: "article",
-      });
-    }
-  }
-  return buildPageMetadata({
-    title: `${siteConfig.title} — town`,
-    description: "Aquarius town map. Click a building to meet the character behind the skills.",
+export const metadata: Metadata = {
+  ...buildPageMetadata({
+    title: siteConfig.title,
+    description: siteConfig.description,
     path: "/",
-  });
-}
+  }),
+  title: { absolute: siteConfig.title },
+};
 
-interface PageProps {
-  searchParams: Promise<{ building?: string }>;
-}
+const HOME_FAQS = [
+  {
+    question: "What is an AI agent skill?",
+    answer: "An AI agent skill is a reusable folder of instructions and optional scripts, references, or assets that teaches a compatible agent how to perform a specific workflow.",
+  },
+  {
+    question: "Where can I find agent skills?",
+    answer: "Use the skillZs catalog to search skills from the open ecosystem, compare real install rankings, read each SKILL.md manual, inspect source links, and review available security checks.",
+  },
+  {
+    question: "How do I create an agent skill?",
+    answer: "Create a kebab-case folder with an uppercase SKILL.md file, add a precise name and description, write a focused workflow with a finish condition, then test both activation and output before publishing.",
+  },
+];
 
-export default async function TownPage({ searchParams }: PageProps) {
-  const sp = await searchParams;
-  const tiles = await loadTownLayout();
+export default async function HomePage() {
+  let skills: CatalogSkill[] = [];
+  let total = 0;
 
-  // Eagerly resolve the drawer character so redirect() fires before rendering,
-  // and so renderToString in tests can see the resolved data synchronously.
-  let drawerCharacter: Awaited<ReturnType<typeof fetchCharacterBySlug>> = null;
-  if (sp.building) {
-    drawerCharacter = await fetchCharacterBySlug(sp.building);
-    if (!drawerCharacter) {
-      redirect("/");
-    }
+  try {
+    const page = await listCatalogSkills({ perPage: 10 });
+    skills = page.data;
+    total = page.pagination.total;
+  } catch (error) {
+    console.error("homepage catalog fetch failed:", error);
   }
 
-  const townItemList = {
+  const itemList = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "@id": absoluteUrl("/#town"),
-    name: "skillZs Aquarius town",
-    numberOfItems: tiles.length,
-    itemListElement: tiles.map((t, i) => ({
+    name: "Most installed agent skills",
+    numberOfItems: skills.length,
+    itemListElement: skills.map((skill, index) => ({
       "@type": "ListItem",
-      position: i + 1,
-      url: absoluteUrl(`/character/${t.character.slug}`),
-      name: t.character.name,
+      position: index + 1,
+      name: skill.name,
+      url: absoluteUrl(catalogSkillPath(skill)),
+    })),
+  };
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: HOME_FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
     })),
   };
 
   return (
-    <div className="pt-2">
-      {/* JsonLd is an async RSC (reads nonce from headers); wrapped in Suspense so
-          renderToString in Vitest (which cannot await async RSCs) sees the fallback
-          instead of throwing "component suspended". In production/streaming SSR the
-          script tag is flushed as soon as headers() resolves. */}
-      <Suspense fallback={null}>
-        <JsonLd data={townItemList} />
-      </Suspense>
-      <h1 className="display text-5xl md:text-7xl leading-none mb-3">
-        <span className="drip">Aquarius</span>
-      </h1>
-      <p className="type-font text-base text-[var(--color-rust)] mb-6">
-        a town of seven storefronts. tap any building to meet the character.
-      </p>
+    <div className="pt-8">
+      <JsonLd data={[itemList, faq]} />
 
-      <TownMap tiles={tiles} />
-
-      {drawerCharacter && (
-        <Suspense fallback={<DrawerSkeleton />}>
-          <BuildingDrawer
-            character={drawerCharacter}
-            heroUrl={resolveCharacterHero(drawerCharacter)}
+      <header className="py-12 md:py-20 border-b border-[#29313a] mb-10">
+        <div className="type-font text-xs uppercase tracking-[0.18em] text-[var(--color-grape)] mb-6">
+          ~/open-agent-registry <span className="text-[var(--color-rust)]">/ live</span>
+        </div>
+        <h1 className="display text-5xl sm:text-7xl md:text-9xl leading-[0.86] mb-7 max-w-6xl">
+          agent skills<br /><span className="text-[var(--color-grape)]">hub. indexed.</span>
+        </h1>
+        <p className="type-font text-sm md:text-base leading-relaxed max-w-2xl text-[var(--color-ink-soft)]">
+          skillZs is an open AI agent skills hub with {total.toLocaleString()} reusable workflows for Claude Code, Codex, Cursor, and other agents. Every listing links to its source and SKILL.md manual. Rankings use real ecosystem installs, with no paid placement. Compare, inspect, and install skills without creating an account.
+        </p>
+        <form action="/browse" className="mt-8 max-w-3xl flex border border-[#303944] bg-[#080a0c] focus-within:border-[var(--color-grape)] focus-within:shadow-[0_0_30px_rgba(85,214,255,0.08)]">
+          <span className="type-font text-[var(--color-grape)] px-4 py-4 border-r border-[#303944]" aria-hidden>$</span>
+          <label htmlFor="home-skill-search" className="sr-only">Search skills</label>
+          <Input
+            id="home-skill-search"
+            name="q"
+            type="search"
+            minLength={2}
+            placeholder="search react, security, postgres..."
+            className="min-w-0 flex-1"
+            classNames={{
+              field: "h-full rounded-none border-0",
+              input: "type-font px-4 py-4 text-sm placeholder:text-[#626b76]",
+            }}
           />
-        </Suspense>
+          <Button type="submit" size="lg" ripple className="type-font h-auto rounded-none px-5 py-4 text-xs uppercase tracking-[0.12em]">
+            find →
+          </Button>
+        </form>
+      </header>
+
+      <section className="mb-12 grid gap-5 md:grid-cols-2" aria-label="Agent skills explained">
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-3xl">What are agent skills?</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            Agent skills package repeatable instructions, scripts, references, and templates in a portable folder. Compatible agents load the right skill when its description matches the task, giving Claude Code, Codex, Cursor, and other tools a consistent workflow without another long prompt.
+          </p>
+          <MotionLink href="/browse" className="tag-pill mt-5">browse all skills &rarr;</MotionLink>
+        </article>
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-3xl">How do you create an agent skill?</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            Start with one repeatable job. Add a valid SKILL.md, describe exactly when it should run, write verifiable steps, test positive and negative triggers, review permissions and scripts, then publish the folder with a license and examples.
+          </p>
+          <MotionLink href="/guides/how-to-create-agent-skills" className="tag-pill mt-5">read the complete guide &rarr;</MotionLink>
+        </article>
+      </section>
+
+      {skills.length > 0 ? (
+        <section aria-labelledby="leaderboard-heading">
+          <div className="flex items-end justify-between gap-4 mb-5">
+            <h2 id="leaderboard-heading" className="display text-3xl md:text-4xl leading-none">
+              <span className="drip">most installed</span>
+            </h2>
+            <span className="tag-font text-xs text-[var(--color-rust)] uppercase tracking-[0.16em]">top 10 / all time</span>
+          </div>
+          <SkillLeaderboard skills={skills} />
+        </section>
+      ) : (
+        <div className="ink-frame p-10 text-center bg-[var(--color-paper-2)]">
+          <h2 className="display text-4xl mb-3">catalog unavailable</h2>
+          <p className="type-font">The upstream skill index could not be reached.</p>
+        </div>
       )}
+
+      <section className="mt-14" aria-labelledby="home-faq-heading">
+        <h2 id="home-faq-heading" className="display text-3xl md:text-4xl">Agent skills FAQ</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {HOME_FAQS.map((item) => (
+            <article key={item.question} className="ink-frame-soft bg-[var(--color-paper-2)] p-5">
+              <h3 className="display text-xl leading-tight">{item.question}</h3>
+              <p className="type-font mt-3 text-sm leading-6">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
     </div>
   );
 }

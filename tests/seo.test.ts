@@ -59,7 +59,7 @@ describe("seo helpers", () => {
   it("maps category metadata to canonical category routes", () => {
     expect(categoryRoute("agent")).toBe("/category/agents");
     expect(categoryRoute(null)).toBe("/category/other");
-    expect(categoryTitle("agent")).toBe("Agents Claude skills");
+    expect(categoryTitle("agent")).toBe("Agents AI agent skills");
   });
 
   it("builds page metadata with canonical, social, and robots fields", () => {
@@ -72,10 +72,32 @@ describe("seo helpers", () => {
     });
 
     expect(metadata.title).toBe("Demo");
-    expect(metadata.description).toBe("Demo page");
+    expect(String(metadata.description).length).toBeGreaterThanOrEqual(70);
     expect(metadata.alternates?.canonical).toBe("/demo");
     expect(metadata.twitter?.images).toEqual(["/demo.png"]);
     expect(metadata.robots).toEqual({ index: false, follow: true });
+  });
+
+  it("keeps generated titles within the root template limit", () => {
+    const metadata = buildPageMetadata({
+      title: "x".repeat(100),
+      description: "A complete description that is already long enough for a useful search result snippet.",
+      path: "/long-title",
+    });
+
+    expect(String(metadata.title)).toHaveLength(50);
+  });
+
+  it("expands short indexable titles for search results", () => {
+    const metadata = buildPageMetadata({
+      title: "xdrop agent skill",
+      description: "Install and inspect the xdrop agent skill, including its source, instructions, and compatibility details.",
+      path: "/skills/example/xdrop",
+    });
+    const renderedTitle = `${metadata.title} | skillZs`;
+
+    expect(renderedTitle.length).toBeGreaterThanOrEqual(30);
+    expect(renderedTitle.length).toBeLessThanOrEqual(60);
   });
 
   it("derives skill descriptions and images from the best available fields", () => {

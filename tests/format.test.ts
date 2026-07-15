@@ -24,6 +24,16 @@ describe("compactNumber", () => {
     expect(compactNumber(1_000_000)).toBe("1M");
     expect(compactNumber(2_500_000)).toBe("2.5M");
   });
+
+  it("promotes to '1M' at the rounding boundary instead of '1000k'", () => {
+    expect(compactNumber(999_500)).toBe("1M");
+    expect(compactNumber(999_999)).toBe("1M");
+  });
+
+  it("returns '0' for non-finite input", () => {
+    expect(compactNumber(NaN)).toBe("0");
+    expect(compactNumber(Infinity)).toBe("0");
+  });
 });
 
 describe("categoryEmoji", () => {

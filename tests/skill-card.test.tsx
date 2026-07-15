@@ -40,14 +40,14 @@ describe("SkillCard", () => {
     const html = renderToString(
       <SkillCard skill={makeSkill({ diptych_url: "https://blob.example/diptych/pr-review.png" })} />,
     );
-    expect(html).toContain('src="https://blob.example/diptych/pr-review.png"');
+    expect(html).toContain(encodeURIComponent("https://blob.example/diptych/pr-review.png"));
   });
 
   it("falls back to cover_url when diptych_url is missing", () => {
     const html = renderToString(
       <SkillCard skill={makeSkill({ diptych_url: null, cover_url: "https://blob.example/covers/pr-review.png" })} />,
     );
-    expect(html).toContain('src="https://blob.example/covers/pr-review.png"');
+    expect(html).toContain(encodeURIComponent("https://blob.example/covers/pr-review.png"));
   });
 
   it("renders the text-only fallback panel when no visual exists", () => {
@@ -116,7 +116,7 @@ describe("SkillCard", () => {
     );
     expect(html).toContain('href="/character/matt-pocock"');
     expect(html).toContain("Matt Pocock");
-    expect(html).toContain('src="https://blob.test/avatars/matt-pocock.png"');
+    expect(html).toContain(encodeURIComponent("https://blob.test/avatars/matt-pocock.png"));
   });
 
   it("shows the chip with the mauve placeholder when avatar has not been generated yet", () => {
@@ -142,5 +142,11 @@ describe("SkillCard", () => {
     expect(html).not.toContain("/character/");
     // Plain byline still present
     expect(html).toContain("PR Review");
+  });
+
+  it("can fill a responsive grid and identifies the source repository", () => {
+    const html = renderToString(<SkillCard skill={makeSkill()} className="w-full" />);
+    expect(html).toContain("w-full");
+    expect(html).toContain('title="example/pr-review"');
   });
 });

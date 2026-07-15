@@ -3,7 +3,7 @@ import { supabaseAnon } from "./supabase/server";
 import type { Character, SkillStats, ActivityRow } from "./types";
 
 const CHARACTER_PUBLIC_COLUMNS =
-  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url, building_url";
+  "id, slug, kind, name, role, bio, gh_handle, x_handle, site_url, avatar_url";
 
 const STATS_COLUMNS =
   "id, slug, name, description, cover_url, diptych_url, tagline, before_text, after_text, category, repo_url, source_repo, github_stars, vote_count, use_count, hotness, first_seen, last_seen, character_id, character_slug, character_name, character_avatar_url";
@@ -80,11 +80,40 @@ export async function fetchTrending(limit = 12, sort: SortKey = "hot", coveredOn
     .from("skill_stats")
     .select(STATS_COLUMNS)
     .order(SORT_COLUMN[sort], { ascending: false })
+    .order("slug", { ascending: true })
     .limit(limit);
   if (coveredOnly) q = q.eq("cover_status", "done");
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as SkillStats[];
+}
+
+export function selectDiverseSkills(
+  skills: SkillStats[],
+  limit = 10,
+  maxPerSource = 2,
+): SkillStats[] {
+  const selected: SkillStats[] = [];
+  const selectedIds = new Set<string>();
+  const counts = new Map<string, number>();
+  const target = Math.min(Math.max(0, limit), skills.length);
+
+  for (let sourceCap = Math.max(1, maxPerSource); selected.length < target; sourceCap++) {
+    let added = false;
+    for (const skill of skills) {
+      if (selectedIds.has(skill.id)) continue;
+      const count = counts.get(skill.source_repo) ?? 0;
+      if (count >= sourceCap) continue;
+      selected.push(skill);
+      selectedIds.add(skill.id);
+      counts.set(skill.source_repo, count + 1);
+      added = true;
+      if (selected.length === target) break;
+    }
+    if (!added) break;
+  }
+
+  return selected;
 }
 
 export async function fetchNew(limit = 12, coveredOnly = false): Promise<SkillStats[]> {
@@ -157,6 +186,15 @@ export async function fetchCharacterBySlug(slug: string): Promise<Character | nu
   return (data as Character | null) ?? null;
 }
 
+export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>> {
+  const { data, error } = await supabaseAnon()
+    .from("characters")
+    .select("slug")
+    .order("slug", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Array<{ slug: string }>;
+}
+
 export async function fetchSkillsByCharacter(
   characterId: string,
   limit = 24,
@@ -169,33 +207,6 @@ export async function fetchSkillsByCharacter(
     .limit(limit);
   if (error) throw error;
   return (data ?? []) as SkillStats[];
-}
-
-/**
- * All characters for the /town map. Ordered by slug because created_at is not
- * in the anon column grant (operational column). The town layout JSON drives
- * visual placement, so the DB sort key is only for stable Map iteration.
- */
-export async function fetchCharactersForTown(): Promise<Character[]> {
-  const { data, error } = await supabaseAnon()
-    .from("characters")
-    .select(CHARACTER_PUBLIC_COLUMNS)
-    .order("slug", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Character[];
-}
-
-/**
- * Lightweight slug pull for sitemap.ts. created_at is service-role-only per
- * the column grant; use new Date() for lastModified at the call site.
- */
-export async function fetchSitemapCharacters(): Promise<Array<{ slug: string }>> {
-  const { data, error } = await supabaseAnon()
-    .from("characters")
-    .select("slug")
-    .order("slug", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Array<{ slug: string }>;
 }
 
 const ACTIVITY_PUBLIC_COLUMNS = [

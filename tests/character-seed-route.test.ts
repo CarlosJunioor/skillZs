@@ -32,7 +32,7 @@ vi.mock("../lib/supabase/server", () => ({
 }));
 
 import { POST } from "../app/api/admin/characters/seed/route";
-import { SEED_CHARACTERS } from "../lib/character/seed";
+import { SEED_CHARACTERS, characterForSource } from "../lib/character/seed";
 
 function call(opts: { secret?: string } = {}) {
   const headers: Record<string, string> = {};
@@ -127,5 +127,10 @@ describe("SEED_CHARACTERS roster invariants", () => {
       expect(c.bio.trim().length).toBeGreaterThan(0);
       expect(c.role.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it("finds curated creators by source repository", () => {
+    expect(characterForSource(" MattPocock/Skills ")?.slug).toBe("matt-pocock");
+    expect(characterForSource("unknown/repository")).toBeNull();
   });
 });

@@ -71,4 +71,44 @@ describe("recordInteraction", () => {
     ]);
     expect(filters).toEqual([{ column: "skill_id", value: SKILL_ID }]);
   });
+
+  it("maps a foreign-key violation (unknown skill) to a typed NotFoundError", async () => {
+    const sb = {
+      rpc(name: string) {
+        expect(name).toBe("try_consume_interaction");
+        return Promise.resolve({ data: true, error: null });
+      },
+      from() {
+        return {
+          upsert() {
+            return Promise.resolve({
+              error: { code: "23503", message: "violates foreign key constraint" },
+            });
+          },
+        };
+      },
+    };
+
+    await expect(recordInteraction(sb as never, "use", SKILL_ID, "hash")).rejects.toMatchObject({
+      name: "NotFoundError",
+    });
+  });
+
+  it("rethrows non-FK upsert errors unchanged", async () => {
+    const dbErr = { code: "08006", message: "connection failure" };
+    const sb = {
+      rpc() {
+        return Promise.resolve({ data: true, error: null });
+      },
+      from() {
+        return {
+          upsert() {
+            return Promise.resolve({ error: dbErr });
+          },
+        };
+      },
+    };
+
+    await expect(recordInteraction(sb as never, "vote", SKILL_ID, "hash")).rejects.toBe(dbErr);
+  });
 });

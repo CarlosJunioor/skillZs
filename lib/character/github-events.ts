@@ -1,6 +1,8 @@
 import "server-only";
 
 const EVENTS_API = "https://api.github.com";
+/** Per-request ceiling so one hung GitHub response can't consume the cron budget. */
+const FETCH_TIMEOUT_MS = 15_000;
 
 function headers(): HeadersInit {
   const token = process.env.GITHUB_TOKEN;
@@ -50,7 +52,7 @@ const DEFAULT_BRANCHES = new Set(["refs/heads/main", "refs/heads/master"]);
 export async function fetchPublicEvents(handle: string): Promise<RawGitHubEvent[]> {
   const res = await fetch(
     `${EVENTS_API}/users/${encodeURIComponent(handle)}/events/public?per_page=30`,
-    { headers: headers() },
+    { headers: headers(), signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
   );
   if (res.status === 404) return [];
   if (!res.ok) {

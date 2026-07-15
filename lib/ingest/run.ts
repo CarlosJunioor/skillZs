@@ -76,7 +76,11 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
             priorHash !== newHash &&
             priorDiptychStatus === "done";
 
-          const attribution = await attributeSkillToCharacter(sb, parsed.meta);
+          const attribution = await attributeSkillToCharacter(
+            sb,
+            parsed.meta,
+            `${seed.owner}/${seed.repo}`,
+          );
 
           const { error } = await sb.from("skills").upsert(
             {
@@ -94,7 +98,10 @@ export async function runIngest(seeds: SeedRepo[] = SEED_REPOS): Promise<IngestS
               ...(attribution.character_id !== null
                 ? { character_id: attribution.character_id }
                 : {}),
-              ...(shouldRequeueDiptych ? { diptych_status: "pending" } : {}),
+              // A content-change requeue is a fresh generation request: reset
+              // the attempt counter too, or the claim cap would refuse a row
+              // that previously exhausted its retries.
+              ...(shouldRequeueDiptych ? { diptych_status: "pending", diptych_attempts: 0 } : {}),
               last_seen: now,
             },
             { onConflict: "slug" },

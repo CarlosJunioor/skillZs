@@ -1,7 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { contentSecurityPolicy } from "../lib/csp";
-
-const originalNodeEnv = process.env.NODE_ENV;
 
 function directives(csp: string): Map<string, string> {
   return new Map(
@@ -15,10 +13,10 @@ function directives(csp: string): Map<string, string> {
 
 describe("contentSecurityPolicy", () => {
   beforeEach(() => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
   });
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    vi.unstubAllEnvs();
   });
 
   it("locks down clickjacking, plugins, and base tag", () => {
@@ -43,7 +41,7 @@ describe("contentSecurityPolicy", () => {
   });
 
   it("allows unsafe-eval only in development", () => {
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
     const script = directives(contentSecurityPolicy("n")).get("script-src")!;
     expect(script).toContain("'unsafe-eval'");
   });

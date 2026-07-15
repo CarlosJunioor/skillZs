@@ -22,17 +22,3 @@ export async function uploadCharacterAvatar(slug: string, bytes: Buffer): Promis
   });
   return url;
 }
-
-/**
- * Upload character storefront tile PNG bytes to Vercel Blob at
- * `buildings/{slug}.png`. Mirrors uploadCharacterAvatar.
- */
-export async function uploadCharacterBuilding(slug: string, bytes: Buffer): Promise<string> {
-  const { url } = await put(`buildings/${slug}.png`, bytes, {
-    access: "public",
-    contentType: "image/png",
-    cacheControlMaxAge: ONE_YEAR_SECONDS,
-    token: requireBlobToken(),
-  });
-  return url;
-}

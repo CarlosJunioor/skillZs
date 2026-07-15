@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/motion/button";
 import { showToast } from "./ui/toast";
 
 interface Props {
@@ -56,14 +57,17 @@ export function InstallPill({ pluginName, marketplace, disabled, skillId }: Prop
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
+      size="lg"
+      ripple
       type="button"
       onClick={handleClick}
       disabled={disabled}
       aria-label={`Copy install command: ${cmd}`}
       title={cmd}
       data-copied={copied || undefined}
-      className="install-pill group/install relative w-full text-left ink-frame block px-3 py-2 transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="install-pill group/install relative block h-auto w-full rounded-none border-[var(--color-ink)] px-3 py-2 text-left"
       style={{
         background: copied ? "var(--color-olive)" : "var(--color-ink)",
         color: copied ? "var(--color-ink)" : "var(--color-paper)",
@@ -83,6 +87,6 @@ export function InstallPill({ pluginName, marketplace, disabled, skillId }: Prop
       <code className="mt-1 block type-font text-[11px] leading-tight truncate opacity-80">
         {cmd}
       </code>
-    </button>
+    </Button>
   );
 }

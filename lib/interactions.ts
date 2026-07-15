@@ -36,7 +36,17 @@ export async function recordInteraction(
   const { error } = await sb
     .from(table)
     .upsert({ skill_id: skillId, ip_hash: ipHash }, { onConflict: "skill_id,ip_hash", ignoreDuplicates: true });
-  if (error) throw error;
+  if (error) {
+    // A well-formed but non-existent skillId fails the skill_id FK (Postgres
+    // 23503). That is bad client input, not a server fault — surface it as a
+    // typed NotFoundError so the routes return 404 instead of logging a 500.
+    if ((error as { code?: string }).code === "23503") {
+      const notFound = new Error("unknown skill");
+      notFound.name = "NotFoundError";
+      throw notFound;
+    }
+    throw error;
+  }
 
   const { count, error: countError } = await sb
     .from(table)

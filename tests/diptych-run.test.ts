@@ -319,7 +319,7 @@ describe("runDiptychGeneration", () => {
     expect(stats).toMatchObject({ attempted: 1, generated: 0, failed: 1 });
     expect(stats.errors[0]).toBe("fail-text: openai exploded");
     expect(mocks.state!.updates).toEqual([{
-      payload: { diptych_status: "failed", diptych_error: "openai exploded" },
+      payload: { diptych_status: "failed", diptych_error: "openai exploded", diptych_cost_usd: 0 },
       filters: [
         { column: "id", value: "skill-1" },
         { column: "diptych_status", value: "generating" },

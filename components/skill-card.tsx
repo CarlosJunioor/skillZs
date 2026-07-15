@@ -1,4 +1,5 @@
-import Link from "next/link";
+import Image from "next/image";
+import { MotionLink } from "@/components/motion/motion-link";
 import { compactNumber, categoryLabel } from "@/lib/format";
 import type { SkillStats } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -10,6 +11,7 @@ interface Props {
   skill: SkillStats;
   size?: "sm" | "md" | "lg";
   isNew?: boolean;
+  className?: string;
 }
 
 function tiltFor(slug: string): string {
@@ -19,7 +21,7 @@ function tiltFor(slug: string): string {
   return `${deg.toFixed(2)}deg`;
 }
 
-export function SkillCard({ skill, size = "md", isNew }: Props) {
+export function SkillCard({ skill, size = "md", isNew, className }: Props) {
   const widthClass =
     size === "lg" ? "w-[300px]" : size === "sm" ? "w-[220px]" : "w-[260px]";
   // 3:2 diptych — height tuned to keep cards comparable to the prior cover
@@ -40,20 +42,20 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
   return (
     <div
       style={{ ["--tilt" as string]: tilt }}
-      className={cn("group relative shrink-0 ink-frame slap wobble", widthClass)}
+      className={cn("group relative shrink-0 ink-frame slap wobble", widthClass, className)}
     >
-      <Link
+      <MotionLink
         href={`/skill/${skill.slug}`}
         aria-label={`Open ${skill.name}`}
         className="block"
       >
         <div className={cn("relative w-full overflow-hidden grain", visualHeight)}>
           {visual ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={visual}
               alt={skill.tagline ?? skill.name}
-              loading="lazy"
+              fill
+              sizes={size === "lg" ? "300px" : size === "sm" ? "220px" : "260px"}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -85,26 +87,31 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
             {headline}
           </div>
         </div>
-      </Link>
+      </MotionLink>
 
       {/* Byline row lives outside the outer Link so a CharacterChip can be its
           own anchor (nested <a> is invalid). When character_id is null we
           render the plain skill name in the same slot — no layout reflow. */}
-      {showBylineRow && (
-        <div className="px-3 pb-2 bg-[var(--color-paper)]">
-          {hasCharacter ? (
-            <CharacterChip
-              slug={skill.character_slug as string}
-              name={skill.character_name ?? skill.name}
-              avatarUrl={skill.character_avatar_url}
-            />
-          ) : (
-            <div className="tag-font text-[var(--color-grape)] text-xs truncate">
-              {skill.name}
-            </div>
-          )}
+      <div className="px-3 pb-2 bg-[var(--color-paper)] space-y-1">
+        {showBylineRow && (
+          <div>
+            {hasCharacter ? (
+              <CharacterChip
+                slug={skill.character_slug as string}
+                name={skill.character_name ?? skill.name}
+                avatarUrl={skill.character_avatar_url}
+              />
+            ) : (
+              <div className="tag-font text-[var(--color-grape)] text-xs truncate">
+                {skill.name}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="type-font text-[10px] text-[var(--color-rust)] truncate" title={skill.source_repo}>
+          src: {skill.source_repo}
         </div>
-      )}
+      </div>
 
       {/* Install pill sits OUTSIDE the Link to keep its click from navigating. */}
       <div className="px-3 pt-2 pb-2 border-t-2 border-[var(--color-ink)] bg-[var(--color-paper)]">
@@ -115,7 +122,7 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
         />
       </div>
 
-      <Link
+      <MotionLink
         href={`/skill/${skill.slug}`}
         aria-label={`Open ${skill.name} stats`}
         className="block px-3 py-1.5 border-t-2 border-[var(--color-ink)] bg-[var(--color-paper-2)] flex items-center justify-between text-xs type-font"
@@ -123,7 +130,7 @@ export function SkillCard({ skill, size = "md", isNew }: Props) {
         <span title="Votes">{"♥"} {compactNumber(skill.vote_count)}</span>
         <span title="People using">@ {compactNumber(skill.use_count)}</span>
         <span title="GitHub stars">{"★"} {compactNumber(skill.github_stars)}</span>
-      </Link>
+      </MotionLink>
     </div>
   );
 }

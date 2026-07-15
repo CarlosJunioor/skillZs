@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find Agent Skills"
+  short_description: "Find and compare trustworthy Agent Skills"
+  default_prompt: "Use $find-agent-skills to find and compare the best Agent Skills for my task."

@@ -6,6 +6,9 @@
 const API = "https://api.github.com";
 export const MAX_SKILL_FILE_BYTES = 256_000;
 export const MAX_SKILL_FILES_PER_REPO = 1_000;
+/** Hard ceiling per outbound request so one hung upstream cannot consume the
+ * whole cron budget (Vercel maxDuration is 300s; undici has no overall deadline). */
+export const FETCH_TIMEOUT_MS = 15_000;
 
 function authHeaders(): HeadersInit {
   const token = process.env.GITHUB_TOKEN;
@@ -18,7 +21,10 @@ function authHeaders(): HeadersInit {
 }
 
 async function gh<T>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`, { headers: authHeaders() });
+  const res = await fetch(`${API}${path}`, {
+    headers: authHeaders(),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) {
     throw new Error(`GitHub ${path} -> ${res.status} ${res.statusText}`);
   }
@@ -82,7 +88,10 @@ export async function fetchRaw(
   path: string,
 ): Promise<string> {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
-  const res = await fetch(url, { headers: { "User-Agent": "skillZs-ingest/0.1" } });
+  const res = await fetch(url, {
+    headers: { "User-Agent": "skillZs-ingest/0.1" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`raw ${url} -> ${res.status}`);
   const declaredSize = Number(res.headers.get("content-length") ?? "0");
   if (declaredSize > MAX_SKILL_FILE_BYTES) {

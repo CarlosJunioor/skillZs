@@ -3,17 +3,19 @@ import { categoryLabel } from "./format";
 import type { SkillStats } from "./types";
 
 const DEFAULT_SITE_URL = "https://skillzs.dev";
-const DEFAULT_OG_IMAGE = "/fisheye.png";
+const DEFAULT_OG_IMAGE = "/opengraph-image";
 const DESCRIPTION_MAX = 160;
 
 export const siteConfig = {
   name: "skillZs",
-  title: "skillZs - Claude skills catalog",
+  title: "skillZs - Agent Skills Hub and Catalog",
   description:
-    "Discover, compare, and install hand-tagged Claude skills from public GitHub repos, ranked by votes, usage, stars, and freshness.",
+    "Search and install Agent Skills for Claude Code, Codex, Cursor, and other AI tools in an open hub ranked by real ecosystem installs.",
   url: siteUrl(),
   ogImage: DEFAULT_OG_IMAGE,
   keywords: [
+    "agent skills",
+    "agent skills hub",
     "Claude skills",
     "Claude Code skills",
     "AI agent skills",
@@ -72,13 +74,13 @@ export function categoryRoute(slug: string | null | undefined): string {
 
 export function categoryTitle(slug: string | null | undefined): string {
   const label = categoryRoutes.find((category) => category.slug === (slug ?? "other"))?.label ?? categoryLabel(slug);
-  return `${label} Claude skills`;
+  return `${label} AI agent skills`;
 }
 
 export function categoryDescription(slug: string | null | undefined): string {
   const label = categoryRoutes.find((category) => category.slug === (slug ?? "other"))?.label.toLowerCase() ?? categoryLabel(slug).toLowerCase();
   return seoDescription(
-    `Browse ${label} Claude skills for agents, automation, workflows, prompts, coding, research, and creative projects.`,
+    `Browse ${label} skills for Claude Code, Codex, Cursor, and other AI agents, ranked from the live skills ecosystem.`,
   );
 }
 
@@ -110,15 +112,24 @@ export function buildPageMetadata({
   type?: "website" | "article";
   noIndex?: boolean;
 }): Metadata {
-  const cleanDescription = seoDescription(description);
+  const contextualTitle = noIndex || title.length >= 21
+    ? title
+    : `${title} - Agent Skills Guide`;
+  const cleanTitle = contextualTitle.length <= 50
+    ? contextualTitle
+    : `${contextualTitle.slice(0, 47).trimEnd()}...`;
+  const initialDescription = seoDescription(description);
+  const cleanDescription = initialDescription.length >= 70
+    ? initialDescription
+    : seoDescription(`${initialDescription} Explore agent skills, source manuals, install data, and practical guides on skillZs.`);
   return {
-    title,
+    title: cleanTitle,
     description: cleanDescription,
     alternates: {
       canonical: path,
     },
     openGraph: {
-      title,
+      title: cleanTitle,
       description: cleanDescription,
       url: path,
       siteName: siteConfig.name,
@@ -127,12 +138,14 @@ export function buildPageMetadata({
         {
           url: image,
           alt: imageAlt,
+          width: 1200,
+          height: 630,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: cleanTitle,
       description: cleanDescription,
       images: [image],
     },
@@ -151,6 +164,7 @@ export function websiteJsonLd() {
     "@type": "WebSite",
     "@id": absoluteUrl("/#website"),
     name: siteConfig.name,
+    alternateName: "skillZs Agent Skills Hub",
     url: absoluteUrl("/"),
     description: siteConfig.description,
     inLanguage: "en",
@@ -167,7 +181,9 @@ export function organizationJsonLd() {
     "@id": absoluteUrl("/#organization"),
     name: siteConfig.name,
     url: absoluteUrl("/"),
+    description: siteConfig.description,
     logo: absoluteUrl("/icon.png"),
+    sameAs: ["https://github.com/CarlosJunioor/skillZs"],
   };
 }
 

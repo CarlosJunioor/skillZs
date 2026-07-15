@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type SkillRow = { diptych_status: string | null; diptych_cost_usd: number | string | null };
-type CharRow = { avatar_status: string | null; avatar_cost_usd: number | string | null };
+type CharRow = {
+  avatar_status: string | null;
+  avatar_cost_usd: number | string | null;
+};
 type State = {
   skills: SkillRow[];
   skillsError: { message: string } | null;
@@ -97,7 +100,7 @@ describe("GET /api/admin/cost", () => {
     });
   });
 
-  it("aggregates per-status counts and totals for both pipelines", async () => {
+  it("aggregates per-status counts and totals", async () => {
     mocks.state.skills = [
       { diptych_status: "done", diptych_cost_usd: 0.04 },
       { diptych_status: "done", diptych_cost_usd: 0.04 },

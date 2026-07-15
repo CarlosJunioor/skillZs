@@ -2,7 +2,7 @@
  * Prompt construction for diptych text + image.
  *
  * Style guide source of truth: design/character-style-guide.md (shared with
- * covers; the diptych uses the same town-of-Aquarius aesthetic but renders a
+ * covers; the diptych uses the same grungy comic aesthetic but renders a
  * 3:2 before/after split rather than a character portrait).
  *
  * Bumping STYLE_VERSION + resetting diptych_status to 'pending' triggers regen

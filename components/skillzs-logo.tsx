@@ -5,6 +5,7 @@
  * and paint texture, but the letters are placed on a horizontal header baseline.
  */
 
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import type { CSSProperties } from "react";
 
@@ -34,8 +35,7 @@ export function SkillZsLogo({ size = "md", className, animate = false }: Props) 
           } as CSSProperties
         }
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/skillzs-wordmark.png"
           alt="skillZs"
           width={LOGO_WIDTH}
@@ -55,8 +55,7 @@ export function SkillZsLogo({ size = "md", className, animate = false }: Props) 
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src="/skillzs-wordmark.png"
       alt="skillZs"
       width={LOGO_WIDTH}

@@ -9,6 +9,7 @@ export interface SeedCharacter {
   gh_handle?: string | null;
   x_handle?: string | null;
   site_url?: string | null;
+  source_repos?: readonly string[];
 }
 
 /**
@@ -26,18 +27,19 @@ export const SEED_CHARACTERS: readonly SeedCharacter[] = [
     kind: "zeke",
     name: "Zeke",
     role: "In-house builder of skillZs",
-    bio: "Lives in Aquarius. Ships the catalog you are reading. Talks like a caveman.",
+    bio: "Builds the skillZs catalog you are reading. Talks like a caveman.",
     gh_handle: "CarlosJunioor",
   },
   {
     slug: "matt-pocock",
     kind: "influencer",
     name: "Matt Pocock",
-    role: "TypeScript explainer-in-chief",
-    bio: "Author of Total TypeScript. Turns scary generics into a one-minute video.",
+    role: "Agent skill author and engineering educator",
+    bio: "Creates composable agent skills for real engineering workflows and teaches developers through AI Hero and Total TypeScript.",
     gh_handle: "mattpocockuk",
     x_handle: "mpocock1",
     site_url: "https://www.totaltypescript.com",
+    source_repos: ["mattpocock/skills"],
   },
   {
     slug: "theo-browne",
@@ -89,3 +91,10 @@ export const SEED_CHARACTERS: readonly SeedCharacter[] = [
     site_url: "https://www.pragmaticengineer.com",
   },
 ] as const;
+
+export function characterForSource(sourceRepo: string): SeedCharacter | null {
+  const source = sourceRepo.trim().toLowerCase();
+  return SEED_CHARACTERS.find((character) =>
+    character.source_repos?.some((repo) => repo.toLowerCase() === source),
+  ) ?? null;
+}

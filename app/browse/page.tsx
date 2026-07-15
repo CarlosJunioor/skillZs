@@ -1,180 +1,207 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
-import { SkillCard } from "@/components/skill-card";
-import { fetchBrowse, normalizeSearchQuery, type SortKey } from "@/lib/stats";
-import { compactNumber } from "@/lib/format";
-import { buildPageMetadata, collectionJsonLd } from "@/lib/seo";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
+import { MotionLink } from "@/components/motion/motion-link";
+import { RouteTabs } from "@/components/motion/route-tabs";
+import { SkillLeaderboard } from "@/components/skill-leaderboard";
+import { absoluteUrl, breadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
+import {
+  catalogSkillPath,
+  listCatalogSkills,
+  searchCatalogSkills,
+  type CatalogSkill,
+  type CatalogView,
+} from "@/lib/skills-sh";
 
-export const revalidate = 120;
+export const revalidate = 60;
 
-const BROWSE_TITLE = "Browse Claude skills";
-const BROWSE_DESCRIPTION =
-  "Browse the full skillZs catalog of Claude skills by category, freshness, votes, usage, and GitHub stars.";
+const browseDescription = "Browse the Agent Skills directory for Claude Code, Codex, Cursor, and other AI tools. Search SKILL.md workflows ranked by live installs.";
 
-export const metadata: Metadata = buildPageMetadata({
-  title: BROWSE_TITLE,
-  description: BROWSE_DESCRIPTION,
-  path: "/browse",
-});
+const BROWSE_FAQS = [
+  {
+    question: "What are the most popular AI agent skills?",
+    answer: "The default directory view ranks Agent Skills by all-time ecosystem installs. Trending shows recent momentum and hot shows current activity. These rankings are discovery signals, not endorsements.",
+  },
+  {
+    question: "How do you choose the right agent skill?",
+    answer: "Match the skill description to one concrete job, read the complete SKILL.md, verify tools and permissions, then test the workflow on a small reversible task before using it on important work.",
+  },
+] as const;
 
-const SORTS: Array<{ key: SortKey; label: string }> = [
-  { key: "hot", label: "hot" },
-  { key: "new", label: "fresh" },
-  { key: "votes", label: "most voted" },
-  { key: "uses", label: "most used" },
-  { key: "stars", label: "most starred" },
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; page?: string; q?: string }>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const isVariant = Boolean(sp.q || sp.view || (sp.page && sp.page !== "1"));
+  return buildPageMetadata({
+    title: "Agent Skills Directory: Browse All Skills",
+    description: browseDescription,
+    path: "/browse",
+    noIndex: isVariant,
+  });
+}
+
+const VIEWS: Array<{ key: CatalogView; label: string }> = [
+  { key: "all-time", label: "most installed" },
+  { key: "trending", label: "trending" },
+  { key: "hot", label: "hot now" },
 ];
-
-const CATS: Array<{ key: string; label: string }> = [
-  { key: "all", label: "all" },
-  { key: "coding", label: "coding" },
-  { key: "creative", label: "creative" },
-  { key: "agent", label: "agents" },
-  { key: "utils", label: "utils" },
-  { key: "research", label: "research" },
-  { key: "other", label: "misc" },
-];
-
-const PAGE = 60;
-const MAX_PAGE = 100;
+const PER_PAGE = 100;
 
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; cat?: string; page?: string; covered?: string; q?: string }>;
+  searchParams: Promise<{ view?: string; page?: string; q?: string }>;
 }) {
   const sp = await searchParams;
-  const sort = (SORTS.find((s) => s.key === sp.sort)?.key ?? "hot") as SortKey;
-  const cat = CATS.find((c) => c.key === sp.cat)?.key ?? "all";
-  const coveredOnly = sp.covered === "1";
-  const search = normalizeSearchQuery(sp.q);
+  const view = VIEWS.find((item) => item.key === sp.view)?.key ?? "all-time";
   const requestedPage = Number(sp.page ?? "1");
-  const page = Number.isInteger(requestedPage)
-    ? Math.min(MAX_PAGE, Math.max(1, requestedPage))
-    : 1;
-  const offset = (page - 1) * PAGE;
+  const page = Number.isInteger(requestedPage) ? Math.max(1, requestedPage) : 1;
+  const rawQuery = (sp.q ?? "").trim().slice(0, 100);
+  const query = rawQuery.length >= 2 ? rawQuery : "";
+  let skills: CatalogSkill[] = [];
+  let total = 0;
+  let hasMore = false;
+  let loadError = false;
 
-  const { skills, total } = await fetchBrowse({
-    sort,
-    category: cat === "all" ? null : cat,
-    limit: PAGE,
-    offset,
-    coveredOnly,
-    search,
-  });
+  try {
+    if (query.length >= 2) {
+      skills = await searchCatalogSkills(query, 200);
+      total = skills.length;
+    } else {
+      const result = await listCatalogSkills({ view, page: page - 1, perPage: PER_PAGE });
+      skills = result.data;
+      total = result.pagination.total;
+      hasMore = result.pagination.hasMore;
+    }
+  } catch (error) {
+    console.error("browse catalog fetch failed:", error);
+    loadError = true;
+  }
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE));
-  const buildHref = (overrides: { sort?: string; cat?: string; page?: number; covered?: boolean; q?: string }) => {
+  const hrefFor = (next: { view?: CatalogView; page?: number }) => {
     const params = new URLSearchParams();
-    const s = overrides.sort ?? sort;
-    const c = overrides.cat ?? cat;
-    const p = overrides.page ?? page;
-    const cov = overrides.covered ?? coveredOnly;
-    const q = overrides.q ?? search;
-    if (s !== "hot") params.set("sort", s);
-    if (c !== "all") params.set("cat", c);
-    if (p !== 1) params.set("page", String(p));
-    if (cov) params.set("covered", "1");
-    if (q) params.set("q", q);
+    const nextView = next.view ?? view;
+    const nextPage = next.page ?? page;
+    if (nextView !== "all-time") params.set("view", nextView);
+    if (nextPage > 1) params.set("page", String(nextPage));
     const qs = params.toString();
     return `/browse${qs ? `?${qs}` : ""}`;
+  };
+  const collection = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Agent Skills Directory",
+    description: browseDescription,
+    url: absoluteUrl("/browse"),
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: skills.length,
+      itemListElement: skills.map((skill, index) => ({
+        "@type": "ListItem",
+        position: (page - 1) * PER_PAGE + index + 1,
+        name: skill.name,
+        url: absoluteUrl(catalogSkillPath(skill)),
+      })),
+    },
+  };
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: BROWSE_FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
   };
 
   return (
     <div className="pt-8">
-      <JsonLd
-        data={collectionJsonLd({
-          path: "/browse",
-          name: BROWSE_TITLE,
-          description: BROWSE_DESCRIPTION,
-          skills,
-        })}
-      />
-      <header className="flex items-end justify-between flex-wrap gap-3 mb-6">
-        <h1 className="display text-5xl md:text-7xl leading-none">
-          <span className="drip">browse</span>
-        </h1>
-        <span className="tag-font text-[var(--color-grape)] text-2xl rotate-[-2deg]">
-          {compactNumber(total)} skills tagged
-        </span>
+      <JsonLd data={[
+        collection,
+        faq,
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Agent Skills Directory", path: "/browse" },
+        ]),
+      ]} />
+      <header className="mb-6">
+        <div className="flex items-end justify-between flex-wrap gap-3">
+          <h1 className="display text-5xl md:text-7xl leading-none"><span className="drip">agent skills directory</span></h1>
+          <span className="tag-font text-[var(--color-grape)] text-xl rotate-[-2deg]">
+            {query ? `${total} matches` : `${total.toLocaleString()} indexed`}
+          </span>
+        </div>
+        <p className="type-font mt-5 max-w-3xl text-sm leading-6 text-[var(--color-ink-soft)]">
+          The skillZs Agent Skills Directory indexes reusable SKILL.md workflows for Claude Code, Codex, Cursor, and other compatible AI tools. Search by job or technology, compare live install rankings, inspect the original source and manual, then review permissions before installing.
+        </p>
       </header>
 
-      <div className="ink-frame-soft bg-[var(--color-paper-2)] p-4 mb-8 space-y-3">
-        <form action="/browse" className="flex flex-wrap items-center gap-2 pb-3 border-b-2 border-dashed border-[var(--color-ink-soft)]">
-          <label htmlFor="skill-search" className="tag-font text-[var(--color-grape)] mr-2">
-            search:
-          </label>
-          <input
+      <div className="ink-frame-soft bg-[var(--color-paper-2)] p-4 mb-8 space-y-4">
+        <form action="/browse" className="flex flex-wrap items-center gap-2">
+          <label htmlFor="skill-search" className="tag-font text-[var(--color-grape)] mr-2">search:</label>
+          <Input
             id="skill-search"
             name="q"
             type="search"
-            defaultValue={search}
-            placeholder="skill name, repo, category"
-            className="type-font flex-1 min-w-[210px] bg-[var(--color-paper)] border-2 border-[var(--color-ink)] px-3 py-2 text-sm outline-none shadow-[2px_2px_0_var(--shadow-color)] focus:bg-[var(--color-olive)]"
+            defaultValue={query}
+            minLength={2}
+            placeholder="react native, code review, postgres..."
+            className="min-w-[210px] flex-1"
+            classNames={{
+              field: "h-10 rounded-none bg-[var(--color-paper)]",
+              input: "type-font px-3 text-sm",
+            }}
           />
-          {sort !== "hot" && <input type="hidden" name="sort" value={sort} />}
-          {cat !== "all" && <input type="hidden" name="cat" value={cat} />}
-          {coveredOnly && <input type="hidden" name="covered" value="1" />}
-          <button type="submit" className="tag-pill">search</button>
-          {search && (
-            <Link href={buildHref({ q: "", page: 1 })} scroll={false} className="tag-pill">
-              clear
-            </Link>
-          )}
+          <Button type="submit" size="md" ripple className="tag-font rounded-none uppercase tracking-[0.06em]">search</Button>
+          {query && <MotionLink href="/browse" className="tag-pill">clear</MotionLink>}
         </form>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="tag-font text-[var(--color-grape)] mr-2">sort:</span>
-          {SORTS.map((s) => (
-            <Link key={s.key} href={buildHref({ sort: s.key, page: 1 })} scroll={false}
-              className="tag-pill" data-active={s.key === sort || undefined}>
-              {s.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="tag-font text-[var(--color-grape)] mr-2">vibe:</span>
-          {CATS.map((c) => (
-            <Link key={c.key} href={buildHref({ cat: c.key, page: 1 })} scroll={false}
-              className="tag-pill" data-active={c.key === cat || undefined}>
-              {c.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t-2 border-dashed border-[var(--color-ink-soft)]">
-          <span className="tag-font text-[var(--color-grape)] mr-2">filter:</span>
-          <Link href={buildHref({ covered: !coveredOnly, page: 1 })} scroll={false}
-            className="tag-pill" data-active={coveredOnly || undefined}>
-            {coveredOnly ? "\u2713 tagged covers only" : "tagged covers only"}
-          </Link>
-        </div>
+        {!query && (
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t-2 border-dashed border-[var(--color-ink-soft)]">
+            <span className="tag-font text-[var(--color-grape)] mr-2">rank:</span>
+            <RouteTabs
+              tabs={VIEWS.map((item) => ({
+                href: hrefFor({ view: item.key, page: 1 }),
+                label: item.label,
+                active: view === item.key,
+              }))}
+            />
+          </div>
+        )}
       </div>
 
-      {skills.length === 0 ? (
-        <div className="ink-frame p-16 text-center bg-[var(--color-paper-2)]">
-          <p className="display text-3xl mb-2">nothing tagged</p>
-          <p className="type-font">try another search or filter combo</p>
-        </div>
+      {loadError ? (
+        <div className="ink-frame p-10 text-center"><p className="display text-2xl">catalog unavailable</p></div>
+      ) : skills.length > 0 ? (
+        <SkillLeaderboard skills={skills} startRank={query ? 1 : (page - 1) * PER_PAGE + 1} />
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-          {skills.map((s) => (
-            <SkillCard key={s.id} skill={s} size="sm" />
-          ))}
-        </div>
+        <div className="ink-frame p-10 text-center"><p className="display text-2xl">nothing found</p></div>
       )}
 
-      {totalPages > 1 && (
-        <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
-          {page > 1 && (
-            <Link href={buildHref({ page: page - 1 })} className="tag-pill">&larr; prev</Link>
-          )}
-          <span className="type-font text-sm text-[var(--color-rust)]">
-            page {page} / {totalPages} - showing {offset + 1}-{Math.min(offset + PAGE, total)} of {compactNumber(total)}
-          </span>
-          {page < totalPages && (
-            <Link href={buildHref({ page: page + 1 })} className="tag-pill">next &rarr;</Link>
-          )}
-        </div>
+      <section className="mt-12 grid gap-5 md:grid-cols-2" aria-label="About the agent skill catalog">
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-2xl">{BROWSE_FAQS[0].question}</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            {BROWSE_FAQS[0].answer} See the methodology and current leaders in the <MotionLink href="/guides/best-agent-skills">best Agent Skills ranking guide</MotionLink>.
+          </p>
+        </article>
+        <article className="ink-frame-soft bg-[var(--color-paper-2)] p-6">
+          <h2 className="display text-2xl">{BROWSE_FAQS[1].question}</h2>
+          <p className="type-font mt-3 text-sm leading-6">
+            {BROWSE_FAQS[1].answer} To build your own workflow, use the <MotionLink href="/guides/how-to-create-agent-skills">agent skill creation guide</MotionLink>.
+          </p>
+        </article>
+      </section>
+
+      {!query && (page > 1 || hasMore) && (
+        <nav aria-label="Catalog pages" className="mt-10 flex items-center justify-center gap-3">
+          {page > 1 && <MotionLink href={hrefFor({ page: page - 1 })} className="tag-pill">← previous</MotionLink>}
+          <span className="type-font text-sm">page {page}</span>
+          {hasMore && <MotionLink href={hrefFor({ page: page + 1 })} className="tag-pill">next →</MotionLink>}
+        </nav>
       )}
     </div>
   );

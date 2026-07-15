@@ -1,8 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Image from "next/image";
+import { useRef, useSyncExternalStore } from "react";
+import { Button } from "@/components/motion/button";
 import { SkillCard } from "./skill-card";
 import type { SkillStats } from "@/lib/types";
+
+const NO_OP_SUBSCRIBE = () => () => {};
+const SERVER_NULL = () => null;
+
+// Cache the client's "page load" timestamp once. getSnapshot must be
+// referentially stable (else useSyncExternalStore loops), and Date.now() must
+// not run during a component render — the purity lint forbids it, and it would
+// otherwise drift between the SSR and hydration renders.
+let clientNow: number | null = null;
+function getClientNow(): number {
+  if (clientNow === null) clientNow = Date.now();
+  return clientNow;
+}
+
+/** The client's load time, or null during SSR + the hydration render. */
+function useClientNow(): number | null {
+  return useSyncExternalStore(NO_OP_SUBSCRIBE, getClientNow, SERVER_NULL);
+}
 
 interface Props {
   title: string;
@@ -16,7 +36,13 @@ interface Props {
 
 export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14, watermark }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [cutoff] = useState(() => Date.now() - newCutoffDays * 24 * 60 * 60 * 1000);
+  // Compute the "new" cutoff only once hydrated. Calling Date.now() during the
+  // SSR/hydration render runs on two different clocks, so a skill whose
+  // first_seen straddles the boundary would render the NEW stamp on the server
+  // but not the client (or vice versa) — a hydration mismatch under ISR. Until
+  // hydrated, cutoff is null ("not new yet"); the stamp appears post-hydration.
+  const now = useClientNow();
+  const cutoff = now === null ? null : now - newCutoffDays * 24 * 60 * 60 * 1000;
 
   function scroll(dir: 1 | -1) {
     const el = scrollerRef.current;
@@ -29,11 +55,12 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
   return (
     <section className="mt-14 relative">
       {watermark && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src="/fisheye.png"
           alt=""
           aria-hidden
+          width={600}
+          height={600}
           className="hidden md:block absolute -right-32 top-0 w-[600px] h-[600px] object-contain pointer-events-none select-none z-0 rotate-[6deg] opacity-[0.08]"
         />
       )}
@@ -47,16 +74,20 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
           <span className="tag-font text-[var(--color-grape)] hidden md:inline-block rotate-[-2deg]">
             scroll &rarr;
           </span>
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => scroll(-1)}
-            className="w-10 h-10 ink-frame-soft bg-[var(--color-paper)] hover:bg-[var(--color-olive)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none flex items-center justify-center display"
+            className="display h-10 w-10 rounded-none bg-[var(--color-paper)] hover:bg-[var(--color-olive)]"
             aria-label={`Scroll ${title} left`}
-          >‹</button>
-          <button
+          >‹</Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => scroll(1)}
-            className="w-10 h-10 ink-frame-soft bg-[var(--color-paper)] hover:bg-[var(--color-olive)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none flex items-center justify-center display"
+            className="display h-10 w-10 rounded-none bg-[var(--color-paper)] hover:bg-[var(--color-olive)]"
             aria-label={`Scroll ${title} right`}
-          >›</button>
+          >›</Button>
         </div>
       </div>
 
@@ -69,7 +100,7 @@ export function SkillRow({ title, emoji, skills, size = "md", newCutoffDays = 14
             <SkillCard
               skill={s}
               size={size}
-              isNew={new Date(s.first_seen).getTime() > cutoff}
+              isNew={cutoff !== null && new Date(s.first_seen).getTime() > cutoff}
             />
           </div>
         ))}
